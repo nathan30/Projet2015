@@ -57,7 +57,7 @@ public abstract class AbstractRoundPanel extends JPanel implements Runnable
 	/** Délai associé à une itération forcée */
 	protected final static long FORCED_ITERATION_STEP = 50;
 	/** délai entre deux màj physiques en ms */
-	protected final static double PHYS_DELAY = 1000f / UPS; 
+	public final static double PHYS_DELAY = 1000f / UPS; 
 	/** délai entre deux màj graphiques en ms */
 	protected final static double GRAPH_DELAY = 1000f / FPS;
 	

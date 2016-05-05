@@ -94,6 +94,8 @@ public class LocalGameRoundPanel extends AbstractRoundPanel
 				elapsedGraphTime = elapsedGraphTime + elapsedTime;
 				elapsedStatTime = elapsedStatTime + elapsedTime;
 				
+				//System.out.println(elapsedPhysTime);
+				
 				if(elapsedPhysTime/PHYS_DELAY >= 1)
 				{	// on récupère les commandes des joueurs humains
 					Direction[] directions = keyManager.retrieveDirections();

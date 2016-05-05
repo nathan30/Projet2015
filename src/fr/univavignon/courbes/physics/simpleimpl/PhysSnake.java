@@ -469,7 +469,8 @@ public class PhysSnake extends Snake
 	 * 		{@code true} ssi le serpent a été éliminé à cette itération.
 	 */
 	public boolean update(Board board, long elapsedTime, Direction direction)
-	{	boolean result = false;
+	{	
+		boolean result = false;
 		
 		if(eliminatedBy==null && board.state!=State.PRESENTATION)
 		{	PhysBoard myBoard = (PhysBoard)board;
