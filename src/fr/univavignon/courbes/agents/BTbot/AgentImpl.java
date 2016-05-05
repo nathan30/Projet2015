@@ -30,22 +30,42 @@ import fr.univavignon.courbes.inter.simpleimpl.AbstractRoundPanel;
 import fr.univavignon.courbes.physics.simpleimpl.PhysBoard;
 import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
 
-
+/**
+ * Travail en cours.
+ * L'agent fait un BackTracking.
+ * 
+ * Pour l'instant, lancez le jeu avec que 2 joueurs
+ * l'IA est C6PO (star wars)
+ * 
+ * @author charlie
+ *
+ */
 public class AgentImpl extends Agent
 {	
 	//ATTRIBUTS
 
-	//l'ennemi le plus proche
-	int idE;
+	int idE; //l'id player de l'ennemi
+	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
-	int pasDuree = 500;//(int) AbstractRoundPanel.PHYS_DELAY;
-	int profondeur = 2;
+	
+	//pour le backtracking, l'ia fera ses tests en avancant
+	//d'un certain pas, caractérirsé par pasDuréé
+	//(peut aussi s'exprimer en pixel, en le mul par movingSpeed
+	int pasDuree = 250;//(int) AbstractRoundPanel.PHYS_DELAY;
+	int profondeur =2; //la profondeur de la recherche
+	boolean calculMvEnnemi = false;
+	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
+	//sinon,prend seulement les 3 dir de l'iA
+	
 	//affichage debug
 	boolean afficherInfosRec = true;
-	boolean afficherInfosTps = true;
-	boolean afficherInfosDecision = true;
+	//affiche l'arbre de recherche, avec les infos
+	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
 	boolean afficherInfosInitiales = true;
-	
+	//affiche divers infos, et les parametres du backtracking
+	//affiche le temps d'execution de la fonction poids() recursive
+	//affiche la direction finale prise par l'ia, a la fin de processDirection
+		
 	//METHODES
 	
 	/**
@@ -65,7 +85,7 @@ public class AgentImpl extends Agent
 		checkInterruption();	// on doit tester l'interruption au début de chaque méthode
 		
 		
-		
+		//on determine les id
 		idIA = getPlayerId();
 		if (idIA == 0) idE = 1;
 		else		  idE = 0;
@@ -73,198 +93,217 @@ public class AgentImpl extends Agent
 		Board board = getBoard();
 		
 		Direction result = Direction.NONE;
-		// partie pas encore commencée : on ne fait rien
+		// si partie a commence
 		if(board != null)
 		{
 			if (afficherInfosInitiales)
 			{
-				System.out.println("idE = " + idE + " idIA = " + idIA);
-				System.out.println("duree  du pas = " + pasDuree + " ms");
-				System.out.println("distance du pas pour l'IA = " + board.snakes[idIA].movingSpeed * pasDuree + "px");
-				
-			}
-			
-			
-			if (afficherInfosTps)
-			{
-				System.out.println("AVANT RECUSRISIVTE");
+				System.out.println("------------------------------------------------------");
+				System.out.println("  idE = " + idE + " idIA = " + idIA);
+				System.out.println("  duree  du pas = " + pasDuree + " ms");
+				System.out.println("  distance du pas pour l'IA = " + board.snakes[idIA].movingSpeed * pasDuree + "px");
+				System.out.println("  soit une vision de  = " + board.snakes[idIA].movingSpeed * pasDuree * profondeur + "px (profondeur de " + profondeur + ")");
+				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
 			long tpsDeb = System.currentTimeMillis();
-			double[] tab = poids(board, 0, profondeur);
+			double[] poids = poids(board, 0, profondeur); //lancement de la fonct recrsiv
 			long tpsFin = System.currentTimeMillis();
 			
-			if (afficherInfosTps)
+			if (afficherInfosInitiales)
 			{
-				
-				System.out.println("APRES RECUSRISIVTE");
-				System.out.println("temps d'execution : " + (tpsFin - tpsDeb) + "ms");
+				System.out.println("----APRES RECUSRISIVTE-----------------------------");
+				System.out.println("*temps d'execution : " + (tpsFin - tpsDeb) + "ms");
 			}
 			
-			int dir = idMax(tab);
+			//on determine la direction avec le plus gros poids
+			int dir = idMax(poids);
 			
-			if (afficherInfosDecision)
+			if (afficherInfosInitiales)
 			{
-				System.out.println("LEFT\tNONE\tRIGHT	POIDS");
-				for (double val : tab)
-					System.out.print(val + "\t");
-					
-				System.out.print("\n");
+				System.out.println("Poids calcules : ");
+				System.out.println( " -LEFT  : " + poids[0]);
+				System.out.println( " -NONE  : " + poids[1]);
+				System.out.println( " -RIGHT : " + poids[2]);
 			}
 					
-			
-			if (dir == 0)
-			{
+			if (dir == 0) 		
 				result =  Direction.LEFT;
-			}
-			else if (dir == 1)
-			{
+			else if (dir == 1)	
 				result =  Direction.NONE;
-			}
-			else
-			{
+			else				
 				result =  Direction.RIGHT;
-			}
 
 		}
 		
-		if (afficherInfosDecision) System.out.println("DECISION : " + result + "\n");
+		if (afficherInfosInitiales)
+		{
+			System.out.println(" ***DECISION : " + result + "***");
+			System.out.println("------------------------------------------------------\n");
+		}
+			
 		
 		return result;
 	}
 	
-	//CALCULS DE POIDS
+	//FONCTIONS CALCULS DE POIDS
 
-	
-	//renvoie un tab qui donne le poids si ia va a gauche, none et droite
+	//fonction recursive qui retourne le poids (score)
+	//pour chaque directions
+	//i = 0 : poids si l'ia va a gauche
+	//i = 1 : tout droit
+	//i = 2 : a droite
 	double[] poids(Board bd, int niv, int lim)
 	{
 		if (afficherInfosRec)
 		{
 			for (int i = 0; i < niv; i++) System.out.print("\t");
-			System.out.println("coo IA : " + bd.snakes[idIA].currentX + "," + bd.snakes[1].currentY + "crntAngle = "+ bd.snakes[idIA].currentAngle + " rad");
+			System.out.println(niv + "/" + lim + " |  coo IA : (" + bd.snakes[idIA].currentX + "," + bd.snakes[1].currentY + ") crntAngle = "+ bd.snakes[idIA].currentAngle + " rad");
 		}
 		
-
-		
 		//CONDITION D'ARRET
-		//si l'IA meurt
+		
+		//si l'IA meurt, on elague
 		if (bd.snakes[idIA].eliminatedBy != null)
 		{
 			if (afficherInfosRec)
 			{
 				for (int i = 0; i < niv; i++) System.out.print("\t");
-				System.out.println("MORT elimnatedBy : " + bd.snakes[this.getPlayerId()].eliminatedBy);
+				System.out.println("IA MORT elimnatedBy : " + bd.snakes[this.getPlayerId()].eliminatedBy + " poids = -1000");
 			}
 			
 			double[] tab = {-1000,-1000,-1000};
 			return tab;
 		}
-		//si l'ennemi meurt
-		if (bd.snakes[idE].eliminatedBy != null)
+		//si l'ennemi meurt (a prioris, il ne faudrait pas elaguer ici)
+		else if (bd.snakes[idE].eliminatedBy != null)
 		{
 			if (afficherInfosRec)
 			{
 				for (int i = 0; i < niv; i++) System.out.print("\t");
-				System.out.println("ENNEMI mort elimnatedby = " + bd.snakes[idE].eliminatedBy);
+				System.out.println("ENNEMI mort elimnatedby = " + bd.snakes[idE].eliminatedBy + " poids = 1000");
 			}
 			
 			double[] tab = {1000,1000,1000};
 			return tab;
 		}
-		//si on arrive en branche
+		//si on arrive en branche, on evalue la board
 		else if  (niv == lim)
 		{
 			if (afficherInfosRec)
 			{
 				for (int i = 0; i < niv; i++) System.out.print("\t");
-				System.out.println("BRANCHE");
+				System.out.println("BRANCHE poids = 0");
 			}
 			
-			double[] tab = {0,0,0};
-			return tab;
+			return evaluer(bd);
 		}
 		//SINON
 		else
 		{
-			//valeur renvoye, le poids pour les 3 mouvement
-			double moyenne[] = new double[3];
+			double moyenne[] = new double[3]; //tab retourne
 			int iDir = 0;
 			
-			//la board qui sera utilise pour le niveau suivant
-			//et le tableau qui permettra de recueillir ce qu'elle renvoie
+			//on cree une copie de la board en local
 			PhysBoard bdTmp = null;
+			
+			//enumeration des directions
 			double[] pds;
 			Direction[] commandes = new Direction[2];
-			
 			Direction[] mouvements = {Direction.LEFT, Direction.NONE, Direction.RIGHT};
 			for (Direction dirIA : mouvements)
 			{
-				for (Direction dirE : mouvements)
+				//si on enumere les dir de l'ennemi
+				//on imbrique un autre for
+				if (calculMvEnnemi)
 				{
-					//ici, on applique a la board passe en param
-					//les mouvement geenere
+					for (Direction dirE : mouvements)
+					{
+						//on applique a la board les mouvement en cours d'enumeration
+						bdTmp = new PhysBoard((PhysBoard) bd);
+						commandes[idIA] = dirIA;
+						commandes[idE] = dirE;
+						bdTmp.update(pasDuree, commandes);
+						
+						if (afficherInfosRec)
+						{
+							for (int i = 0; i < niv; i++) System.out.print("\t");
+							System.out.println("IA = " + dirIA +" et E = " + dirE);
+						}
+						
+						//on calcule le poids de cette nouvelle board
+						pds = poids(bdTmp, niv+1, lim);
+						moyenne[iDir] += moyTab(pds);
+					}
+					moyenne[iDir] = moyenne[iDir] / 3.;
+				}
+				//si on ne prend pas en compte les direction de l'ennemi
+				//on le fait simplement avancer tout droit
+				else
+				{
+					
+					//on applique a la board les mouvement en cours d'enumeration
 					bdTmp = new PhysBoard((PhysBoard) bd);
 					commandes[idIA] = dirIA;
-					commandes[idE] = dirE;
+					commandes[idE] = null; //null c'est comme Direction.NONE
 					bdTmp.update(pasDuree, commandes);
 					
 					if (afficherInfosRec)
 					{
 						for (int i = 0; i < niv; i++) System.out.print("\t");
-						System.out.println(" IA = " + dirIA +" et E = " + dirE);
+						System.out.println("IA = " + dirIA);
 					}
 					
 					//on calcule le poids de cette nouvelle board
-					
 					pds = poids(bdTmp, niv+1, lim);
-					moyenne[iDir] += moyTab(pds);
+					moyenne[iDir] = moyTab(pds);
 				}
 				
-				moyenne[iDir] = moyenne[iDir] / 3.;
-				iDir++;
+				if (afficherInfosRec)
+				{
+					for (int i = 0; i < niv; i++) System.out.print("\t");
+					System.out.println("  --MOYENNE POIDS: " + moyenne[iDir]);
+				}
 				
+				iDir++;
 			}
-			
 			
 			return moyenne;
 		}
 		
 	}
 	
-	//evalue la baord donne
+	//evalue la board passe en parametre
+	
 	double[] evaluer(Board bd)
 	{
-		double[] tab = {500,500,500};
+		//pour le moment retourne simplement 0
+		double[] tab = {0,0,0};
 		return tab;
 	}
 	
+	//fonction qui renvoie la moyenne des valeurs de la table
 	double moyTab(double[] tab)
 	{
 		double total = 0;
 		for (double val : tab)
-		{
 			total += val;
-		}
 		
 		return (total / tab.length);
 	}
 	
 	//renvoie l'id du nombre max dans le tableau
-	
+	//si il y a plusieurs occurences du maximum
+	//renvoie au hasard l'id de l'une d'elle
 	int idMax(double[] tab)
 	{
-		//on cherche la valeur max
 		int id = 0;
-		
 		for (int i = 0; i < tab.length; i++)
 		{
 			//si on trouve une occurence du maximum
 			if (tab[id] == tab[i])
-			{
-				if (Math.random() > 0.5)
-					id = i;
-			}
+				if (Math.random() > 0.5) id = i;
+
 			//si on trouve une valeur sup
 			if (tab[id] < tab[i])
 				id = i;

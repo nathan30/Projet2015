@@ -495,6 +495,8 @@ public class PhysSnake extends Snake
 				graphTrail = myBoard.normalizePositions(graphTrail);
 				physTrail = myBoard.normalizePositions(physTrail);
 				
+
+				
 				// on détecte les collisions éventuelles
 				result = detectCollisions(myBoard,physTrail);
 				

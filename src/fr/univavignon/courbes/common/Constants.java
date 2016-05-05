@@ -79,7 +79,7 @@ public class Constants
 	////	TROUS DANS LES TRAINES
 	////////////////////////////////////////////////////////////////
 	/** Taux de création des trous, correspond à la probabilité pour un serpent de laisser un trou dans sa traine à chaque ms */
-	public static final float HOLE_RATE = 0.0008f;
+	public static final float HOLE_RATE = 0;//0.0008f;
 	/** Largeur d'un trou pour un serpent d'épaisseur normale, exprimée en pixels */
 	public static final int BASE_HOLE_WIDTH = 40;
 	/** Coefficient multiplicatif/diviseur appliqué à la largeur d'un trou pour l'augmenter */
