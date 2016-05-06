@@ -51,14 +51,16 @@ public class AgentImpl extends Agent
 	//pour le backtracking, l'ia fera ses tests en avancant
 	//d'un certain pas, caractérirsé par pasDuréé
 	//(peut aussi s'exprimer en pixel, en le mul par movingSpeed
-	int pasDuree = 250;//(int) AbstractRoundPanel.PHYS_DELAY;
-	int profondeur =2; //la profondeur de la recherche
+	
+	//150,4,false semblent pas mal
+	int pasDuree = 150;//(int) AbstractRoundPanel.PHYS_DELAY;
+	int profondeur = 4; //la profondeur de la recherche
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
 	//sinon,prend seulement les 3 dir de l'iA
 	
 	//affichage debug
-	boolean afficherInfosRec = true;
+	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
 	boolean afficherInfosInitiales = true;
@@ -103,6 +105,7 @@ public class AgentImpl extends Agent
 				System.out.println("  duree  du pas = " + pasDuree + " ms");
 				System.out.println("  distance du pas pour l'IA = " + board.snakes[idIA].movingSpeed * pasDuree + "px");
 				System.out.println("  soit une vision de  = " + board.snakes[idIA].movingSpeed * pasDuree * profondeur + "px (profondeur de " + profondeur + ")");
+				System.out.println("  dist IA pr faire 90° = " + (Math.PI/2.) / board.snakes[idIA].turningSpeed * board.snakes[idIA].movingSpeed + " px");
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
@@ -176,6 +179,8 @@ public class AgentImpl extends Agent
 			return tab;
 		}
 		//si l'ennemi meurt (a prioris, il ne faudrait pas elaguer ici)
+		//mais comme on joue 1vs1, si l'ennemi meurt, 
+		//l'ia gagne
 		else if (bd.snakes[idE].eliminatedBy != null)
 		{
 			if (afficherInfosRec)
@@ -228,7 +233,7 @@ public class AgentImpl extends Agent
 						if (afficherInfosRec)
 						{
 							for (int i = 0; i < niv; i++) System.out.print("\t");
-							System.out.println("IA = " + dirIA +" et E = " + dirE);
+							System.out.println(" -IA = " + dirIA +" et E = " + dirE);
 						}
 						
 						//on calcule le poids de cette nouvelle board
@@ -251,7 +256,7 @@ public class AgentImpl extends Agent
 					if (afficherInfosRec)
 					{
 						for (int i = 0; i < niv; i++) System.out.print("\t");
-						System.out.println("IA = " + dirIA);
+						System.out.println(" -IA = " + dirIA);
 					}
 					
 					//on calcule le poids de cette nouvelle board
@@ -262,7 +267,7 @@ public class AgentImpl extends Agent
 				if (afficherInfosRec)
 				{
 					for (int i = 0; i < niv; i++) System.out.print("\t");
-					System.out.println("  --MOYENNE POIDS: " + moyenne[iDir]);
+					System.out.println(" ->MOYENNE POIDS: " + moyenne[iDir]);
 				}
 				
 				iDir++;
