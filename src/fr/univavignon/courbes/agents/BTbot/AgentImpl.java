@@ -47,19 +47,21 @@ public class AgentImpl extends Agent
 	int idE; //l'id player de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
-
+	Direction lastDir = Direction.NONE;
 	
 	
 	//PARAMETRES QUI SEMBLENT BIEN
 	//DEFENSIF = 
-	//	petitPasDuree = 75
-	// 	nbPetitPas = 6
+	// lente, pas tres precise mais long terme
+	//	petitPasDuree = 30
+	// 	nbPetitPas = 13
 	//  profondeur = 4
 	//  calculMvEnnemi = false
 	//OU ENCORE
-	//	petitPasDuree = 50
-	// 	nbPetitPas = 30
-	//  profondeur = 3
+	// precis tres rapide mais tres court terme
+	//	petitPasDuree = 130
+	// 	nbPetitPas = 5
+	//  profondeur = 2
 	//  calculMvEnnemi = false
 	//OFFENSIF
 	//	??
@@ -67,8 +69,8 @@ public class AgentImpl extends Agent
 	//pour le backtracking, l'ia fera ses tests en avancant
 	//d'un certain pas, caractérirsé par pasDuree (petitPasDuree * nbPetitPas)
 	//elle effectuera nbPetitPasDuree updates de petitPasDuree chacunes.
-	long petitPasDuree = 75;//(long) AbstractRoundPanel.PHYS_DELAY;
-	int  nbPetitPas = 6;
+	long petitPasDuree = 30;//(long) AbstractRoundPanel.PHYS_DELAY;
+	int  nbPetitPas = 13;
 	long pasDuree;
 	
 	int profondeur = 4; //la profondeur de la recherche
@@ -152,8 +154,15 @@ public class AgentImpl extends Agent
 				System.out.println( " -NONE  : " + poids[1]);
 				System.out.println( " -RIGHT : " + poids[2]);
 			}
-					
-			if (dir == 0) 		
+			
+			//si la situation est desespre, on garde la precedente
+			//parfois, l'ia semble indiquer qu'elle n'a aucune chance de survie
+			//pourtant, elle peut s'en sortir
+			//astuce pour la faire persister dans le dernier mouvement qu'elle a pris
+			//avant de se retoruver dans une situation comme celle ci
+			if (poids[0] == -1000 && poids[1] == -1000 && poids[2] == -1000)	
+				result = lastDir;
+			else if (dir == 0) 		
 				result =  Direction.LEFT;
 			else if (dir == 1)	
 				result =  Direction.NONE;
@@ -168,7 +177,7 @@ public class AgentImpl extends Agent
 			System.out.println("------------------------------------------------------\n");
 		}
 			
-		
+		lastDir = result;
 		return result;
 	}
 	
@@ -258,7 +267,10 @@ public class AgentImpl extends Agent
 						bdTmp = new PhysBoard((PhysBoard) bd);
 						commandes[idIA] = dirIA;
 						commandes[idE] = dirE;
-						bdTmp.update(pasDuree, commandes);
+						
+						//on applique plusieurs petits pas pour faire le grand pas
+						for (int i = 0; i < nbPetitPas; i++)
+							bdTmp.update(petitPasDuree, commandes);
 						
 						if (afficherInfosRec)
 						{
@@ -313,7 +325,6 @@ public class AgentImpl extends Agent
 	}
 	
 	//evalue la board passe en parametre
-	
 	double[] evaluer(Board bd)
 	{
 		//pour le moment retourne simplement 0
