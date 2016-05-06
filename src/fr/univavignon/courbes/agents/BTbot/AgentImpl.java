@@ -53,8 +53,8 @@ public class AgentImpl extends Agent
 	//(peut aussi s'exprimer en pixel, en le mul par movingSpeed
 	
 	//150,4,false semblent pas mal
-	int pasDuree = 150;//(int) AbstractRoundPanel.PHYS_DELAY;
-	int profondeur = 4; //la profondeur de la recherche
+	long pasDuree = (long) AbstractRoundPanel.PHYS_DELAY;
+	int profondeur = 5; //la profondeur de la recherche
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
 	//sinon,prend seulement les 3 dir de l'iA

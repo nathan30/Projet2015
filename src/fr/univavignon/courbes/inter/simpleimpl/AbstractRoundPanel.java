@@ -51,7 +51,7 @@ public abstract class AbstractRoundPanel extends JPanel implements Runnable
 {	/** Numéro de série de la classe */
 	private static final long serialVersionUID = 1L;
 	/** Nombre désiré de mises à jour physiques par seconde */
-	protected final static int UPS = 1;
+	protected final static int UPS = 6;
 	/** Nombre désiré de mises à jour graphiques par seconde */
 	protected final static int FPS = 60;
 	/** Délai associé à une itération forcée */
