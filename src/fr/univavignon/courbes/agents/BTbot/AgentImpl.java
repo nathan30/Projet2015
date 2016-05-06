@@ -84,6 +84,9 @@ public class AgentImpl extends Agent
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
+	
+	
+	int agentId = -1;
 		
 	//METHODES
 	
@@ -96,6 +99,7 @@ public class AgentImpl extends Agent
 	 */
 	public AgentImpl(Integer playerId) 
 	{	super(playerId);
+		agentId = playerId;
 	}
 	
 	@Override
@@ -168,6 +172,12 @@ public class AgentImpl extends Agent
 		return result;
 	}
 	
+	/**
+	 * @param bd
+	 * @param niv
+	 * @param lim
+	 * @return
+	 */
 	//FONCTIONS CALCULS DE POIDS
 
 	//fonction recursive qui retourne le poids (score)
@@ -258,7 +268,8 @@ public class AgentImpl extends Agent
 						
 						//on calcule le poids de cette nouvelle board
 						pds = poids(bdTmp, niv+1, lim);
-						moyenne[iDir] += moyTab(pds);
+						//moyenne[iDir] += moyTab(pds);
+						moyenne[iDir] = moyTab(pds);
 					}
 					moyenne[iDir] = moyenne[iDir] / 3.;
 				}
@@ -306,8 +317,68 @@ public class AgentImpl extends Agent
 	double[] evaluer(Board bd)
 	{
 		//pour le moment retourne simplement 0
-		double[] tab = {0,0,0};
+		double []safestArea;
+		/*if(Math.random() > 0.99)
+			safestArea = getSafestArea(bd);*/
+		
+		double headX = bd.snakes[agentId].currentX;
+		double headY = bd.snakes[agentId].currentY;
+		
+		double distance = 0;//Math.sqrt(Math.pow(headX-safestArea[0], 2) + Math.pow(headY-safestArea[1], 2));
+		
+		double[] tab = {-distance, -distance, -distance};
+		
 		return tab;
+	}
+	
+	
+	/**
+	* Découper l'aire de jeu en plusieurs parties et calculer des statistiques
+	* sur chaque partie découper (Nombre d'item, Variance des corps de snakes...)
+	* @return : 
+	* 	un tableau contenant les coordonnées du centre de de la meilleure partie de l'aire de jeu 
+	*/
+	double []getSafestArea(Board bd)
+	{
+		double []coo = new double[2];
+		PhysBoard tmpBoard = new PhysBoard((PhysBoard) bd);
+		//int [][]totalItem = new int[4][4];
+		int []safestArea = new int[3];
+		safestArea[0]=0; // Le nombre d'item max
+		int upperBoundX, upperBoundY, co = 0;
+		// 1- Pour commencer on fait les items 
+		if(!tmpBoard.items.isEmpty())
+		{
+			for(int i=0; i<bd.height; i+=bd.height/4)
+			{
+				for(int j=0;j<bd.width; j+=bd.width/4)
+				{
+					upperBoundX = i + bd.height/4;
+					upperBoundY = j + bd.width/4;
+					for(int k=0;k<tmpBoard.items.size(); i++)
+					{
+						if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
+													   && tmpBoard.items.get(k).y > j
+													   && tmpBoard.items.get(k).y > upperBoundY)
+							{
+								co++;
+								System.out.println("hey");
+							}
+					
+					}
+					if(co > safestArea[0])
+					{
+						safestArea[0]=co;
+						safestArea[1]=i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
+						safestArea[2]=j;
+					}
+					co=0;
+							
+				}
+			}
+		}
+		
+		return coo;
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table
