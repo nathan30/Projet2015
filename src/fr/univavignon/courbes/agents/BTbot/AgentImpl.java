@@ -47,14 +47,31 @@ public class AgentImpl extends Agent
 	int idE; //l'id player de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
+
 	
+	
+	//PARAMETRES QUI SEMBLENT BIEN
+	//DEFENSIF = 
+	//	petitPasDuree = 75
+	// 	nbPetitPas = 6
+	//  profondeur = 4
+	//  calculMvEnnemi = false
+	//OU ENCORE
+	//	petitPasDuree = 50
+	// 	nbPetitPas = 30
+	//  profondeur = 3
+	//  calculMvEnnemi = false
+	//OFFENSIF
+	//	??
+
 	//pour le backtracking, l'ia fera ses tests en avancant
-	//d'un certain pas, caractérirsé par pasDuréé
-	//(peut aussi s'exprimer en pixel, en le mul par movingSpeed
+	//d'un certain pas, caractérirsé par pasDuree (petitPasDuree * nbPetitPas)
+	//elle effectuera nbPetitPasDuree updates de petitPasDuree chacunes.
+	long petitPasDuree = 75;//(long) AbstractRoundPanel.PHYS_DELAY;
+	int  nbPetitPas = 6;
+	long pasDuree;
 	
-	//150,4,false semblent pas mal
-	long pasDuree = (long) AbstractRoundPanel.PHYS_DELAY;
-	int profondeur = 5; //la profondeur de la recherche
+	int profondeur = 4; //la profondeur de la recherche
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
 	//sinon,prend seulement les 3 dir de l'iA
@@ -86,6 +103,7 @@ public class AgentImpl extends Agent
 	{	
 		checkInterruption();	// on doit tester l'interruption au début de chaque méthode
 		
+		pasDuree = petitPasDuree * nbPetitPas;
 		
 		//on determine les id
 		idIA = getPlayerId();
@@ -102,8 +120,9 @@ public class AgentImpl extends Agent
 			{
 				System.out.println("------------------------------------------------------");
 				System.out.println("  idE = " + idE + " idIA = " + idIA);
-				System.out.println("  duree  du pas = " + pasDuree + " ms");
-				System.out.println("  distance du pas pour l'IA = " + board.snakes[idIA].movingSpeed * pasDuree + "px");
+				System.out.println("  duree PetitPas = " + petitPasDuree + "ms, nb petit pas = " + nbPetitPas + " -> duree pas = " + pasDuree + " ms");
+				System.out.println("  distance PetitPas = " + board.snakes[idIA].movingSpeed * petitPasDuree + "px, , nb petit pas = " + nbPetitPas + " -> distance pas = " + pasDuree * board.snakes[idIA].movingSpeed + " px");
+				
 				System.out.println("  soit une vision de  = " + board.snakes[idIA].movingSpeed * pasDuree * profondeur + "px (profondeur de " + profondeur + ")");
 				System.out.println("  dist IA pr faire 90° = " + (Math.PI/2.) / board.snakes[idIA].turningSpeed * board.snakes[idIA].movingSpeed + " px");
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
@@ -224,6 +243,7 @@ public class AgentImpl extends Agent
 				{
 					for (Direction dirE : mouvements)
 					{
+						
 						//on applique a la board les mouvement en cours d'enumeration
 						bdTmp = new PhysBoard((PhysBoard) bd);
 						commandes[idIA] = dirIA;
@@ -251,7 +271,10 @@ public class AgentImpl extends Agent
 					bdTmp = new PhysBoard((PhysBoard) bd);
 					commandes[idIA] = dirIA;
 					commandes[idE] = null; //null c'est comme Direction.NONE
-					bdTmp.update(pasDuree, commandes);
+					
+					//on applique plusieurs petits pas pour faire le grand pas
+					for (int i = 0; i < nbPetitPas; i++)
+						bdTmp.update(petitPasDuree, commandes);
 					
 					if (afficherInfosRec)
 					{
