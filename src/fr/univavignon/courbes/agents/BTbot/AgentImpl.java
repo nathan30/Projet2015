@@ -196,20 +196,6 @@ public class AgentImpl extends Agent
 				System.out.println("IA MORT elimnatedBy : " + bd.snakes[this.getPlayerId()].eliminatedBy + " poids = -1000");
 			}
 			
-			double[] tab = {-1000,-1000,-1000};
-			return tab;
-		}
-		//si l'ennemi meurt (a prioris, il ne faudrait pas elaguer ici)
-		//mais comme on joue 1vs1, si l'ennemi meurt, 
-		//l'ia gagne
-		else if (bd.snakes[idE].eliminatedBy != null)
-		{
-			if (afficherInfosRec)
-			{
-				for (int i = 0; i < niv; i++) System.out.print("\t");
-				System.out.println("ENNEMI mort elimnatedby = " + bd.snakes[idE].eliminatedBy + " poids = 1000");
-			}
-			
 			double[] tab = {IAConstants.MORT_IA,IAConstants.MORT_IA,IAConstants.MORT_IA};
 			return tab;
 		}
@@ -222,7 +208,9 @@ public class AgentImpl extends Agent
 				System.out.println("BRANCHE poids = 0");
 			}
 			
-			return evaluer(bd);
+			double poids = evaluer(bd);
+			double[] tab = {poids,poids,poids};
+			return tab;
 		}
 		//SINON
 		else
@@ -308,20 +296,20 @@ public class AgentImpl extends Agent
 	}
 	
 	//evalue la board passe en parametre
-	double[] evaluer(Board bd)
+	double evaluer(Board bd)
 	{
 		
 		//valeur de poids renvoye, modifie par les conditions suivantes.
-		int poids = 0;
+		double poids = 0;
 		
 		//MORT ENNEMI
-		//si l'ennemi est mort, c'est bien donc on ajoute 1000
 		if (bd.snakes[idE].eliminatedBy != null)
 		{
 			poids += IAConstants.MORT_ENNEMI;
 		}
 		//ITEMS RECUPEREES
-		//on enumre les items nouvelles de l'ia
+		
+		//TO DO
 
 		//ANALYSE SUR LE LONG TERME
 		
@@ -331,9 +319,12 @@ public class AgentImpl extends Agent
 		
 		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
 		System.out.println("distance : "+distance);
-		double[] tab = {1000-distance, 1000-distance, 1000-distance};
+//		double[] tab = {1000-distance, 1000-distance, 1000-distance};
+//		return tab;
 		
-		return tab;
+		poids += 1000 - distance;
+		
+		return poids;
 	}
 	
 	

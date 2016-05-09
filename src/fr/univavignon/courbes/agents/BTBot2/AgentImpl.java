@@ -195,20 +195,6 @@ public class AgentImpl extends Agent
 			double[] tab = {-1000,-1000,-1000};
 			return tab;
 		}
-		//si l'ennemi meurt (a prioris, il ne faudrait pas elaguer ici)
-		//mais comme on joue 1vs1, si l'ennemi meurt, 
-		//l'ia gagne
-		else if (bd.snakes[idE].eliminatedBy != null)
-		{
-			if (afficherInfosRec)
-			{
-				for (int i = 0; i < niv; i++) System.out.print("\t");
-				System.out.println("ENNEMI mort elimnatedby = " + bd.snakes[idE].eliminatedBy + " poids = 1000");
-			}
-			
-			double[] tab = {IAConstants.MORT_ENNEMI,IAConstants.MORT_ENNEMI,IAConstants.MORT_ENNEMI};
-			return tab;
-		}
 		//si on arrive en branche, on evalue la board
 		else if  (niv == lim)
 		{
