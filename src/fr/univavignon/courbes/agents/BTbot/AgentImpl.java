@@ -64,6 +64,8 @@ public class AgentImpl extends Agent
 	
 	
 	int agentId = -1;
+	
+	double []cooSafestArea = new double[2];
 		
 	//METHODES
 	
@@ -108,6 +110,11 @@ public class AgentImpl extends Agent
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
+			
+			/***/
+			getSafestArea(board);
+			System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
+			/***/
 			long tpsDeb = System.currentTimeMillis();
 			double[] poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
 			long tpsFin = System.currentTimeMillis();
@@ -319,16 +326,12 @@ public class AgentImpl extends Agent
 		//ANALYSE SUR LE LONG TERME
 		
 		//pour le moment retourne simplement 0
-		double []safestArea;
-		/*if(Math.random() > 0.99)
-			safestArea = getSafestArea(bd);*/
-		
 		double headX = bd.snakes[agentId].currentX;
 		double headY = bd.snakes[agentId].currentY;
 		
-		double distance = 0;//Math.sqrt(Math.pow(headX-safestArea[0], 2) + Math.pow(headY-safestArea[1], 2));
-		
-		double[] tab = {-distance, -distance, -distance};
+		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+		System.out.println("distance : "+distance);
+		double[] tab = {1000-distance, 1000-distance, 1000-distance};
 		
 		return tab;
 	}
@@ -340,7 +343,7 @@ public class AgentImpl extends Agent
 	* @return : 
 	* 	un tableau contenant les coordonnées du centre de de la meilleure partie de l'aire de jeu 
 	*/
-	double []getSafestArea(Board bd)
+	void getSafestArea(Board bd)
 	{
 		double []coo = new double[2];
 		PhysBoard tmpBoard = new PhysBoard((PhysBoard) bd);
@@ -355,32 +358,32 @@ public class AgentImpl extends Agent
 			{
 				for(int j=0;j<bd.width; j+=bd.width/4)
 				{
-					upperBoundX = i + bd.height/4;
-					upperBoundY = j + bd.width/4;
-					for(int k=0;k<tmpBoard.items.size(); i++)
+					upperBoundX = i + bd.height/4-1;
+					upperBoundY = j + bd.width/4-1;
+					for(int k=0;k<tmpBoard.items.size(); k++)
 					{
 						if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
 													   && tmpBoard.items.get(k).y > j
-													   && tmpBoard.items.get(k).y > upperBoundY)
+													   && tmpBoard.items.get(k).y < upperBoundY)
 							{
 								co++;
-								System.out.println("hey");
 							}
 					
 					}
 					if(co > safestArea[0])
 					{
 						safestArea[0]=co;
-						safestArea[1]=i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
-						safestArea[2]=j;
+						safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
+						safestArea[2]= bd.width/8 + j;
 					}
 					co=0;
 							
 				}
 			}
 		}
-		
-		return coo;
+		cooSafestArea[0] = safestArea[1];
+		cooSafestArea[1] = safestArea[2];
+
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table
