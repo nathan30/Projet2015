@@ -5,3 +5,4 @@ R2D2-1,Chine,8,r2d21@fake.com,password8,avoidcloserwallagent
 R2D2-2,Chine,9,r2d22@fake.com,password9,avoidcloserwallagent
 C6PO,Suisse,10,c6po@fake.com,password10,BTbot
 C6PO-2,Suisse,11,c6po2@fake.com,password11,BTbot
+Chaos,Heaven,12,chaos@fake.com,passwordChaos,BTBot2

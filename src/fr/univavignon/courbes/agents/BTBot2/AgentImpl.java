@@ -1,4 +1,4 @@
-package fr.univavignon.courbes.agents.BTbot;
+package fr.univavignon.courbes.agents.BTBot2;
 
 /*
  * Courbes
@@ -43,8 +43,10 @@ import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
 public class AgentImpl extends Agent
 {	
 	//ATTRIBUTS
-
-	int idE; //l'id player de l'ennemi
+	double [] poids = null;
+	
+	// Créer un tableau avec les Ids des joueurs adversaires et regarder celui qui a la tête la plus proche
+	int idE; //le player Id de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
 	Direction lastDir = Direction.NONE;
@@ -57,7 +59,7 @@ public class AgentImpl extends Agent
 	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = false;
+	boolean afficherInfosInitiales = true;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
@@ -91,7 +93,7 @@ public class AgentImpl extends Agent
 		
 		Board board = getBoard();
 		
-		Direction result = Direction.NONE;
+		Direction result = Direction.RIGHT;
 		// si partie a commence
 		if(board != null)
 		{
@@ -109,13 +111,13 @@ public class AgentImpl extends Agent
 			}
 			
 			long tpsDeb = System.currentTimeMillis();
-			double[] poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
+			poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
 			long tpsFin = System.currentTimeMillis();
 			
 			if (afficherInfosInitiales)
 			{
 				System.out.println("----APRES RECUSRISIVTE-----------------------------");
-				System.out.println("*temps d'execution : " + (tpsFin - tpsDeb) + "ms");
+				System.out.println("*temps d'execution Chaos: " + (tpsFin - tpsDeb) + "ms");
 			}
 			
 			//on determine la direction avec le plus gros poids
@@ -152,6 +154,7 @@ public class AgentImpl extends Agent
 		}
 			
 		lastDir = result;
+		poids = null;
 		return result;
 	}
 	
@@ -203,7 +206,7 @@ public class AgentImpl extends Agent
 				System.out.println("ENNEMI mort elimnatedby = " + bd.snakes[idE].eliminatedBy + " poids = 1000");
 			}
 			
-			double[] tab = {IAConstants.MORT_IA,IAConstants.MORT_IA,IAConstants.MORT_IA};
+			double[] tab = {IAConstants.MORT_ENNEMI,IAConstants.MORT_ENNEMI,IAConstants.MORT_ENNEMI};
 			return tab;
 		}
 		//si on arrive en branche, on evalue la board
@@ -260,6 +263,7 @@ public class AgentImpl extends Agent
 						moyenne[iDir] = moyTab(pds);
 					}
 					moyenne[iDir] = moyenne[iDir] / 3.;
+					bdTmp = null;
 				}
 				//si on ne prend pas en compte les direction de l'ennemi
 				//on le fait simplement avancer tout droit
@@ -284,6 +288,7 @@ public class AgentImpl extends Agent
 					//on calcule le poids de cette nouvelle board
 					pds = poids(bdTmp, niv+1, lim);
 					moyenne[iDir] = moyTab(pds);
+					bdTmp = null;
 				}
 				
 				if (afficherInfosRec)
@@ -294,7 +299,7 @@ public class AgentImpl extends Agent
 				
 				iDir++;
 			}
-			
+			bdTmp = null;
 			return moyenne;
 		}
 		
