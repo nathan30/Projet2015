@@ -245,8 +245,7 @@ public class AgentImpl extends Agent
 						
 						//on calcule le poids de cette nouvelle board
 						pds = poids(bdTmp, niv+1, lim);
-						//moyenne[iDir] += moyTab(pds);
-						moyenne[iDir] = moyTab(pds);
+						moyenne[iDir] += moyTab(pds);
 					}
 					moyenne[iDir] = moyenne[iDir] / 3.;
 					bdTmp = null;
@@ -285,6 +284,7 @@ public class AgentImpl extends Agent
 				
 				iDir++;
 			}
+			
 			bdTmp = null;
 			return moyenne;
 		}
