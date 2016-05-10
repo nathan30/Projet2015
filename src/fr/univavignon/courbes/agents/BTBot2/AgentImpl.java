@@ -254,7 +254,7 @@ public class AgentImpl extends Agent
 			
 			//enumeration des directions
 			double[] pds;
-			Direction[] commandes = new Direction[2];
+			Direction[] commandes = new Direction[bd.snakes.length];
 			Direction[] mouvements = {Direction.LEFT, Direction.NONE, Direction.RIGHT};
 			for (Direction dirIA : mouvements)
 			{
@@ -265,8 +265,11 @@ public class AgentImpl extends Agent
 					for (Direction dirE : mouvements)
 					{
 						checkInterruption();
-						//on applique a la board les mouvement en cours d'enumeration
-						bdTmp = new PhysBoard((PhysBoard) bd);
+						
+						//on met a none les directions de chaques snakes
+						for (int i = 0; i < bd.snakes.length; i++)
+							commandes[i] = Direction.NONE;
+						//puis on applique lesdirections en cours de test
 						commandes[idIA] = dirIA;
 						commandes[idE] = dirE;
 						
@@ -293,10 +296,14 @@ public class AgentImpl extends Agent
 				{
 					
 					//on applique a la board les mouvement en cours d'enumeration
-					bdTmp = new PhysBoard((PhysBoard) bd);
-					commandes[idIA] = dirIA;
-					commandes[idE] = null; //null c'est comme Direction.NONE
 					
+					//on met a none les directions de chaques snakes
+					for (int i = 0; i < bd.snakes.length; i++)
+						commandes[i] = Direction.NONE;
+					//puis on applique a l'ia la direction en cours de test
+					commandes[idIA] = dirIA;
+					
+					bdTmp = new PhysBoard((PhysBoard) bd);
 					//on applique plusieurs petits pas pour faire le grand pas
 					for (int i = 0; i < IAConstants.NB_PETIT_PAS; i++)
 						bdTmp.update(IAConstants.PETIT_PAS_DUREE, commandes);
