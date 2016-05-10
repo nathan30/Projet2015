@@ -43,13 +43,18 @@ import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
 public class AgentImpl extends Agent
 {	
 	//ATTRIBUTS
+	Board board = null;
 	double [] poids = null;
+	Snake snakes[] = null;
+	int snakeIAX = 0;
+	int snakeIAY = 0;
+	double distanceE = Double.POSITIVE_INFINITY; //http://docs.oracle.com/javase/6/docs/api/java/lang/Integer.html
 	
-	// Créer un tableau avec les Ids des joueurs adversaires et regarder celui qui a la tête la plus proche
-	int idE; //le player Id de l'ennemi
+	
+	int idE; //l'id player de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
-	Direction lastDir = Direction.NONE;
+	Direction lastDir = Direction.RIGHT;
 	
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
@@ -59,13 +64,15 @@ public class AgentImpl extends Agent
 	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = true;
+	boolean afficherInfosInitiales = false;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
 	
 	
 	int agentId = -1;
+	
+	double []cooSafestArea = new double[2];
 		
 	//METHODES
 	
@@ -84,19 +91,22 @@ public class AgentImpl extends Agent
 	@Override
 	public Direction processDirection()
 	{	
+		
 		checkInterruption();	// on doit tester l'interruption au début de chaque méthode
-
+		
 		//on determine les id
 		idIA = getPlayerId();
-		if (idIA == 0) idE = 1;
-		else		  idE = 0;
 		
-		Board board = getBoard();
+		//if (idIA == 0) idE = 1;
+		//else		  idE = 0;
 		
-		Direction result = Direction.RIGHT;
+		this.board = getBoard();
+		
+		Direction result = Direction.NONE;
 		// si partie a commence
 		if(board != null)
 		{
+			
 			if (afficherInfosInitiales)
 			{
 				double pasDuree = IAConstants.PETIT_PAS_DUREE * IAConstants.NB_PETIT_PAS;
@@ -110,14 +120,37 @@ public class AgentImpl extends Agent
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
+			this.snakeIAX =  board.snakes[idIA].currentX;
+			this.snakeIAY =  board.snakes[idIA].currentY;
+			this.snakes = board.snakes;
+			for (Snake snake : snakes){
+				
+				System.out.println("X ia = " + snakeIAX + ", X e = " + snake.currentX);
+				System.out.println("Y ia = " + snakeIAY + ", Y e = " + snake.currentY);
+				System.out.println(Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2))));
+				
+				if ( (snake.playerId != idIA) && Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2))) <= this.distanceE){
+					this.distanceE = (double)Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2)));
+					idE = snake.playerId;
+					
+				}
+				//System.out.println("DistanceE = " + distanceE);
+			}
+			
+			
+			
+			/***/
+			getSafestArea(board);
+			//System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
+			/***/
 			long tpsDeb = System.currentTimeMillis();
-			poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
+			poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsive
 			long tpsFin = System.currentTimeMillis();
 			
 			if (afficherInfosInitiales)
 			{
 				System.out.println("----APRES RECUSRISIVTE-----------------------------");
-				System.out.println("*temps d'execution Chaos: " + (tpsFin - tpsDeb) + "ms");
+				System.out.println("*temps d'execution : " + (tpsFin - tpsDeb) + "ms");
 			}
 			
 			//on determine la direction avec le plus gros poids
@@ -155,6 +188,8 @@ public class AgentImpl extends Agent
 			
 		lastDir = result;
 		poids = null;
+		board = null;
+		distanceE = Double.POSITIVE_INFINITY;
 		return result;
 	}
 	
@@ -192,7 +227,7 @@ public class AgentImpl extends Agent
 				System.out.println("IA MORT elimnatedBy : " + bd.snakes[this.getPlayerId()].eliminatedBy + " poids = -1000");
 			}
 			
-			double[] tab = {-1000,-1000,-1000};
+			double[] tab = {IAConstants.MORT_IA,IAConstants.MORT_IA,IAConstants.MORT_IA};
 			return tab;
 		}
 		//si on arrive en branche, on evalue la board
@@ -204,7 +239,9 @@ public class AgentImpl extends Agent
 				System.out.println("BRANCHE poids = 0");
 			}
 			
-			return evaluer(bd);
+			double poids = evaluer(bd);
+			double[] tab = {poids,poids,poids};
+			return tab;
 		}
 		//SINON
 		else
@@ -246,9 +283,9 @@ public class AgentImpl extends Agent
 						//on calcule le poids de cette nouvelle board
 						pds = poids(bdTmp, niv+1, lim);
 						moyenne[iDir] += moyTab(pds);
+						bdTmp = null;
 					}
 					moyenne[iDir] = moyenne[iDir] / 3.;
-					bdTmp = null;
 				}
 				//si on ne prend pas en compte les direction de l'ennemi
 				//on le fait simplement avancer tout droit
@@ -283,45 +320,44 @@ public class AgentImpl extends Agent
 				}
 				
 				iDir++;
+				bdTmp = null;
 			}
 			
-			bdTmp = null;
 			return moyenne;
 		}
 		
 	}
 	
 	//evalue la board passe en parametre
-	double[] evaluer(Board bd)
+	double evaluer(Board bd)
 	{
 		
 		//valeur de poids renvoye, modifie par les conditions suivantes.
-		int poids = 0;
+		double poids = 0;
 		
 		//MORT ENNEMI
-		//si l'ennemi est mort, c'est bien donc on ajoute 1000
 		if (bd.snakes[idE].eliminatedBy != null)
 		{
 			poids += IAConstants.MORT_ENNEMI;
 		}
 		//ITEMS RECUPEREES
-		//on enumre les items nouvelles de l'ia
+		
+		//TO DO
 
 		//ANALYSE SUR LE LONG TERME
 		
 		//pour le moment retourne simplement 0
-		double []safestArea;
-		/*if(Math.random() > 0.99)
-			safestArea = getSafestArea(bd);*/
-		
 		double headX = bd.snakes[agentId].currentX;
 		double headY = bd.snakes[agentId].currentY;
 		
-		double distance = 0;//Math.sqrt(Math.pow(headX-safestArea[0], 2) + Math.pow(headY-safestArea[1], 2));
+		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+		//System.out.println("distance : "+distance);
+//		double[] tab = {1000-distance, 1000-distance, 1000-distance};
+//		return tab;
 		
-		double[] tab = {-distance, -distance, -distance};
+		poids += 1000 - distance;
 		
-		return tab;
+		return poids;
 	}
 	
 	
@@ -331,7 +367,7 @@ public class AgentImpl extends Agent
 	* @return : 
 	* 	un tableau contenant les coordonnées du centre de de la meilleure partie de l'aire de jeu 
 	*/
-	double []getSafestArea(Board bd)
+	void getSafestArea(Board bd)
 	{
 		double []coo = new double[2];
 		PhysBoard tmpBoard = new PhysBoard((PhysBoard) bd);
@@ -346,32 +382,32 @@ public class AgentImpl extends Agent
 			{
 				for(int j=0;j<bd.width; j+=bd.width/4)
 				{
-					upperBoundX = i + bd.height/4;
-					upperBoundY = j + bd.width/4;
-					for(int k=0;k<tmpBoard.items.size(); i++)
+					upperBoundX = i + bd.height/4-1;
+					upperBoundY = j + bd.width/4-1;
+					for(int k=0;k<tmpBoard.items.size(); k++)
 					{
 						if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
 													   && tmpBoard.items.get(k).y > j
-													   && tmpBoard.items.get(k).y > upperBoundY)
+													   && tmpBoard.items.get(k).y < upperBoundY)
 							{
 								co++;
-								System.out.println("hey");
 							}
 					
 					}
 					if(co > safestArea[0])
 					{
 						safestArea[0]=co;
-						safestArea[1]=i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
-						safestArea[2]=j;
+						safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
+						safestArea[2]= bd.width/8 + j;
 					}
 					co=0;
 							
 				}
 			}
 		}
-		
-		return coo;
+		cooSafestArea[0] = safestArea[1];
+		cooSafestArea[1] = safestArea[2];
+
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table

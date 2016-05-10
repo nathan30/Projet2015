@@ -317,7 +317,7 @@ public class AgentImpl extends Agent
 		double headY = bd.snakes[agentId].currentY;
 		
 		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-		System.out.println("distance : "+distance);
+		//System.out.println("distance : "+distance);
 //		double[] tab = {1000-distance, 1000-distance, 1000-distance};
 //		return tab;
 		

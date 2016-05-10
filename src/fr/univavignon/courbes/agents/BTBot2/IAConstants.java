@@ -19,7 +19,7 @@ public class IAConstants {
 	//---------------------------------------------------
 
 	public static final int MORT_IA = -1000;
-	public static final int MORT_ENNEMI = 2000;
+	public static final int MORT_ENNEMI = 0;
 	public static final int BRANCHE = 0;
 	
 	//---------------------------------------------------
