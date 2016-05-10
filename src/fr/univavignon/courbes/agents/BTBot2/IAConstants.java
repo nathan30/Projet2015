@@ -9,9 +9,9 @@ public class IAConstants {
 	//---------------------------------------------------
 	
 	//DEFENSIF
-	public static final int PROFONDEUR = 4;
+	public static final int PROFONDEUR = 3;
 	public static final long PETIT_PAS_DUREE = 50;//(long) AbstractRoundPanel.PHYS_DELAY;
-	public static final int NB_PETIT_PAS = 10;
+	public static final int NB_PETIT_PAS = 13;
 
 	
 	//---------------------------------------------------

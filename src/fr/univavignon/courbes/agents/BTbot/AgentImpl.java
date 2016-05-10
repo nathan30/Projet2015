@@ -113,7 +113,7 @@ public class AgentImpl extends Agent
 			
 			/***/
 			getSafestArea(board);
-			System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
+			//System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
 			/***/
 			long tpsDeb = System.currentTimeMillis();
 			double[] poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
