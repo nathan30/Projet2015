@@ -60,11 +60,11 @@ public class AgentImpl extends Agent
 	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = true;
+	boolean afficherInfosInitiales = false;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
-	
+	boolean longTermFlag = true;
 	
 	int agentId = -1;
 	
@@ -344,13 +344,13 @@ public class AgentImpl extends Agent
 
 			//ANALYSE SUR LE LONG TERME
 			
-//			//pour le moment retourne simplement 0
-//			double headX = bd.snakes[agentId].currentX;
-//			double headY = bd.snakes[agentId].currentY;
-//			
-//			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-//			
-//			poids += 1000 - distance;
+			//pour le moment retourne simplement 0
+			double headX = bd.snakes[agentId].currentX;
+			double headY = bd.snakes[agentId].currentY;
+			
+			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+			
+			poids += 1000 - distance;
 			
 			return poids;
 		}
@@ -399,8 +399,8 @@ public class AgentImpl extends Agent
 	/**
 	* Découper l'aire de jeu en plusieurs parties et calculer des statistiques
 	* sur chaque partie découper (Nombre d'item, Variance des corps de snakes...)
-	* @return : 
-	* 	un tableau contenant les coordonnées du centre de de la meilleure partie de l'aire de jeu 
+	* 
+	* Cette fonction met a meilleure partie de l'aire de jeu  
 	*/
 	void getSafestArea(Board bd)
 	{
@@ -438,12 +438,18 @@ public class AgentImpl extends Agent
 						
 						}
 						ratio = ratioSafestArea(i,upperBoundX,j,upperBoundY,tmpBoard);
-						if(ratio < safestArea[3] && co > safestArea[0])
+						if(ratio <= safestArea[3] && co >= safestArea[0])
 						{
 							safestArea[0]=co;
 							safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
 							safestArea[2]= bd.width/8 + j;
 							safestArea[3]=ratio;
+							if(longTermFlag)
+							{
+								System.out.println("Safest Area => x : "+safestArea[1]+" y : "+safestArea[2]);
+								System.out.println("taux de pixels : "+ratio);
+							}
+							
 						}
 						co=0;
 					}		
@@ -456,7 +462,14 @@ public class AgentImpl extends Agent
 	}
 	
 	/**
+	 * Fonction qui retourne le taux de pixels disponible sur une partie de la 'Board' passée en paramètre
+	 * @param lowBoundX : borne inférieure sur les abscisses d'une partie du board
+	 * @param upBoundX :  borne supérieure les abscisses d'une partie du board
+	 * @param lowBoundY : borne inférieure sur les coordonnées d'une partie du board
+	 * @param upBoundY : borne supérieure sur les coordonnées d'une partie du board
 	 * 
+	 * @return double 
+	 * 			le taux des pixels disponibles sur cette partie
 	 */
 	double ratioSafestArea(int lowBoundX, int upBoundX, int lowBoundY, int upBoundY, PhysBoard tmpBoard)
 	{
@@ -470,17 +483,13 @@ public class AgentImpl extends Agent
 			{
 				for(int j=lowBoundY; j<upBoundY; ++j)
 				{
-					positionExist = tmpBoard.snakes[idS].newTrail.contains(new Position(i,j));
+					positionExist = tmpBoard.snakes[idS].oldTrail.contains(new Position(i,j));
 					if(positionExist) co++;
 				}
 			}
-			// Tester si ce pixel est dans la map
-			
-			// si ou,i incrémenter le nombre de pixel de snake dans cette zone
-			
 		}
 		surface = (upBoundX - lowBoundX)*(upBoundY - lowBoundY);
-		return co/surface;
+		return (co/surface);
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table
