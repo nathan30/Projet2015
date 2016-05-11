@@ -18,6 +18,7 @@ package fr.univavignon.courbes.agents.BTbot;
  * along with Courbes. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -25,6 +26,7 @@ import fr.univavignon.courbes.agents.Agent;
 import fr.univavignon.courbes.agents.BTBot2.IAConstants;
 import fr.univavignon.courbes.common.Board;
 import fr.univavignon.courbes.common.Direction;
+import fr.univavignon.courbes.common.ItemInstance;
 import fr.univavignon.courbes.common.Position;
 import fr.univavignon.courbes.common.Snake;
 import fr.univavignon.courbes.inter.simpleimpl.AbstractRoundPanel;
@@ -304,33 +306,94 @@ public class AgentImpl extends Agent
 	}
 	
 	//evalue la board passe en parametre
-	double evaluer(Board bd)
-	{
-		
-		//valeur de poids renvoye, modifie par les conditions suivantes.
-		double poids = 0;
-		
-		//MORT ENNEMI
-		if (bd.snakes[idE].eliminatedBy != null)
+		double evaluer(Board bd)
 		{
-			poids += IAConstants.MORT_ENNEMI;
-		}
-		//ITEMS RECUPEREES
-		
-		//TO DO
+			
+			//valeur de poids renvoye, modifie par les conditions suivantes.
+			double poids = 0;
+			
+			//MORT ENNEMI
+			if (bd.snakes[idE].eliminatedBy != null)
+			{
+				poids += IAConstants.MORT_ENNEMI;
+			}
+			//ITEMS RECUPEREES
+			LinkedList<ItemInstance> l = itemsRecolteParIA(bd);
+			
+//			System.out.println("---");	
+//			for (ItemInstance item : l)
+//			{
+//				int x = item.x;
+//				int y = item.y;
+//				System.out.println(item.type);
+//				System.out.println("X ia = " + bd.snakes[idIA].currentX + ", X item = " + x);
+//				System.out.println("Y ia = " + bd.snakes[idIA].currentY + ", Y item = " + y);
+//				System.out.println(Math.sqrt((Math.pow((bd.snakes[idIA].currentX- x), 2)) + (Math.pow((bd.snakes[idIA].currentY  - y), 2))));
+//				
+//			}
+//			System.out.println("---");
+			for (ItemInstance item : l)
+			{
+				System.out.println("on capte un " + item.type);
+				
+				poids += IAConstants.USER_FLY;
+			}
+			
+			
+			//TO DO
 
-		//ANALYSE SUR LE LONG TERME
+			//ANALYSE SUR LE LONG TERME
+			
+//			//pour le moment retourne simplement 0
+//			double headX = bd.snakes[agentId].currentX;
+//			double headY = bd.snakes[agentId].currentY;
+//			
+//			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+//			
+//			poids += 1000 - distance;
+			
+			return poids;
+		}
 		
-		//pour le moment retourne simplement 0
-		double headX = bd.snakes[agentId].currentX;
-		double headY = bd.snakes[agentId].currentY;
-		
-		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-		
-		poids += 1000 - distance;
-		
-		return poids;
-	}
+		//fonction qui renvoie les items que l'ia a attrapé dans ces tests de BT
+		LinkedList<ItemInstance> itemsRecolteParIA(Board board)
+		{
+			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
+			
+			//on enuemre les items choppe pendant le BT
+				//on ajoute a la liste items celle qui ont un id superieur
+			for (ItemInstance item : board.snakes[idIA].currentItems)
+			{
+				if ( (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
+				{
+					items.add(item);
+				}
+			}
+
+			
+//			//on enumere les items de l'ia
+//			System.out.println("---");
+//			Iterator<ItemInstance> it = board.snakes[idIA].currentItems.iterator();
+//			while(it.hasNext())
+//			{	
+//				PhysItemInstance item = (PhysItemInstance)it.next();
+//				System.out.println(item.type + " " + item.itemId +" : " + item.remainingTime + ", " + item.type.duration  + ", " + (item.type.duration - item.remainingTime));
+//			}
+//			
+//			if (board.snakes[idIA].currentItems.peek() != null)
+//			{
+//				LinkedList<ItemInstance> test = (LinkedList<ItemInstance>) board.snakes[idIA].currentItems;
+//				PhysItemInstance item = (PhysItemInstance) test.getLast();
+//				
+//				if (item != null)
+//				{
+//					System.out.println("peek : " + item.itemId);
+//				}
+//			}	
+//			System.out.println("---");
+			
+			return items;
+		}
 	
 	
 	/**
