@@ -273,6 +273,7 @@ public class AgentImpl extends Agent
 						commandes[idIA] = dirIA;
 						commandes[idE] = dirE;
 						
+						bdTmp = new PhysBoard((PhysBoard) bd);
 						//on applique plusieurs petits pas pour faire le grand pas
 						for (int i = 0; i < IAConstants.NB_PETIT_PAS; i++)
 							bdTmp.update(IAConstants.PETIT_PAS_DUREE, commandes);

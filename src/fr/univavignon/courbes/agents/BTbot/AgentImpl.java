@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import fr.univavignon.courbes.agents.Agent;
+import fr.univavignon.courbes.agents.BTBot2.IAConstants;
 import fr.univavignon.courbes.common.Board;
 import fr.univavignon.courbes.common.Direction;
 import fr.univavignon.courbes.common.Position;
@@ -57,7 +58,7 @@ public class AgentImpl extends Agent
 	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = false;
+	boolean afficherInfosInitiales = true;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
@@ -223,7 +224,7 @@ public class AgentImpl extends Agent
 			
 			//enumeration des directions
 			double[] pds;
-			Direction[] commandes = new Direction[2];
+			Direction[] commandes = new Direction[bd.snakes.length];
 			Direction[] mouvements = {Direction.LEFT, Direction.NONE, Direction.RIGHT};
 			for (Direction dirIA : mouvements)
 			{
@@ -234,11 +235,15 @@ public class AgentImpl extends Agent
 					for (Direction dirE : mouvements)
 					{
 						checkInterruption();
-						//on applique a la board les mouvement en cours d'enumeration
-						bdTmp = new PhysBoard((PhysBoard) bd);
+						
+						//on met a none les directions de chaques snakes
+						for (int i = 0; i < bd.snakes.length; i++)
+							commandes[i] = Direction.NONE;
+						//puis on applique lesdirections en cours de test
 						commandes[idIA] = dirIA;
 						commandes[idE] = dirE;
 						
+						bdTmp = new PhysBoard((PhysBoard) bd);
 						//on applique plusieurs petits pas pour faire le grand pas
 						for (int i = 0; i < IAConstants.NB_PETIT_PAS; i++)
 							bdTmp.update(IAConstants.PETIT_PAS_DUREE, commandes);
@@ -260,11 +265,15 @@ public class AgentImpl extends Agent
 				else
 				{
 					
-					//on applique a la board les mouvement en cours d'enumeration
-					bdTmp = new PhysBoard((PhysBoard) bd);
-					commandes[idIA] = dirIA;
-					commandes[idE] = null; //null c'est comme Direction.NONE
+					///on applique a la board les mouvement en cours d'enumeration
 					
+					//on met a none les directions de chaques snakes
+					for (int i = 0; i < bd.snakes.length; i++)
+						commandes[i] = Direction.NONE;
+					//puis on applique a l'ia la direction en cours de test
+					commandes[idIA] = dirIA;
+					
+					bdTmp = new PhysBoard((PhysBoard) bd);
 					//on applique plusieurs petits pas pour faire le grand pas
 					for (int i = 0; i < IAConstants.NB_PETIT_PAS; i++)
 						bdTmp.update(IAConstants.PETIT_PAS_DUREE, commandes);
@@ -317,9 +326,6 @@ public class AgentImpl extends Agent
 		double headY = bd.snakes[agentId].currentY;
 		
 		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-		//System.out.println("distance : "+distance);
-//		double[] tab = {1000-distance, 1000-distance, 1000-distance};
-//		return tab;
 		
 		poids += 1000 - distance;
 		
@@ -337,7 +343,10 @@ public class AgentImpl extends Agent
 	{
 		double []coo = new double[2];
 		PhysBoard tmpBoard = new PhysBoard((PhysBoard) bd);
-		//int [][]totalItem = new int[4][4];
+		
+		double headX = bd.snakes[agentId].currentX;
+		double headY = bd.snakes[agentId].currentY;		
+		
 		int []safestArea = new int[3];
 		safestArea[0]=0; // Le nombre d'item max
 		int upperBoundX, upperBoundY, co = 0;
@@ -356,7 +365,9 @@ public class AgentImpl extends Agent
 													   && tmpBoard.items.get(k).y > j
 													   && tmpBoard.items.get(k).y < upperBoundY)
 							{
-								co++;
+								// Ignorer l'emplacement actuelle du snake
+								if(headX < i || headX > upperBoundX || headY < i || headY > upperBoundY)
+									co++;
 							}
 					
 					}
