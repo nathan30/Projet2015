@@ -347,9 +347,11 @@ public class AgentImpl extends Agent
 		double headX = bd.snakes[agentId].currentX;
 		double headY = bd.snakes[agentId].currentY;		
 		
-		int []safestArea = new int[3];
+		double []safestArea = new double[4];
 		safestArea[0]=0; // Le nombre d'item max
+		safestArea[3]=0;
 		int upperBoundX, upperBoundY, co = 0;
+		double ratio;
 		// 1- Pour commencer on fait les items 
 		if(!tmpBoard.items.isEmpty())
 		{
@@ -359,32 +361,63 @@ public class AgentImpl extends Agent
 				{
 					upperBoundX = i + bd.height/4-1;
 					upperBoundY = j + bd.width/4-1;
-					for(int k=0;k<tmpBoard.items.size(); k++)
+					// Ignorer l'emplacement actuelle du snake
+					if(headX < i || headX > upperBoundX || headY < i || headY > upperBoundY)
 					{
-						if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
-													   && tmpBoard.items.get(k).y > j
-													   && tmpBoard.items.get(k).y < upperBoundY)
-							{
-								// Ignorer l'emplacement actuelle du snake
-								if(headX < i || headX > upperBoundX || headY < i || headY > upperBoundY)
+						for(int k=0;k<tmpBoard.items.size(); k++)
+						{
+							if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
+														   && tmpBoard.items.get(k).y > j
+														   && tmpBoard.items.get(k).y < upperBoundY)
+								{
 									co++;
-							}
-					
-					}
-					if(co > safestArea[0])
-					{
-						safestArea[0]=co;
-						safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
-						safestArea[2]= bd.width/8 + j;
-					}
-					co=0;
-							
+								}
+						
+						}
+						ratio = ratioSafestArea(i,upperBoundX,j,upperBoundY,tmpBoard);
+						if(ratio < safestArea[3] && co > safestArea[0])
+						{
+							safestArea[0]=co;
+							safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
+							safestArea[2]= bd.width/8 + j;
+							safestArea[3]=ratio;
+						}
+						co=0;
+					}		
 				}
 			}
 		}
 		cooSafestArea[0] = safestArea[1];
 		cooSafestArea[1] = safestArea[2];
 
+	}
+	
+	/**
+	 * 
+	 */
+	double ratioSafestArea(int lowBoundX, int upBoundX, int lowBoundY, int upBoundY, PhysBoard tmpBoard)
+	{
+		double surface, ratio=0; 
+		int co=0;
+		boolean positionExist=false;
+		for(int idS=0; idS<tmpBoard.snakes.length; idS++)
+		{	
+			// Parcourir la zone passée en paramètre
+			for(int i=lowBoundX; i<upBoundX; ++i)
+			{
+				for(int j=lowBoundY; j<upBoundY; ++j)
+				{
+					positionExist = tmpBoard.snakes[idS].newTrail.contains(new Position(i,j));
+					if(positionExist) co++;
+				}
+			}
+			// Tester si ce pixel est dans la map
+			
+			// si ou,i incrémenter le nombre de pixel de snake dans cette zone
+			
+		}
+		surface = (upBoundX - lowBoundX)*(upBoundY - lowBoundY);
+		return co/surface;
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table
