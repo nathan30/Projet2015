@@ -57,10 +57,10 @@ public class AgentImpl extends Agent
 	//sinon,prend seulement les 3 dir de l'iA
 	
 	//affichage debug
-	boolean afficherInfosRec = false;
+	boolean afficherInfosRec = true;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = false;
+	boolean afficherInfosInitiales = true;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
@@ -110,6 +110,7 @@ public class AgentImpl extends Agent
 				
 				System.out.println("  soit une vision de  = " + board.snakes[idIA].movingSpeed * pasDuree * IAConstants.PROFONDEUR + "px (profondeur de " + IAConstants.PROFONDEUR + ")");
 				System.out.println("  dist IA pr faire 90° = " + (Math.PI/2.) / board.snakes[idIA].turningSpeed * board.snakes[idIA].movingSpeed + " px");
+				System.out.println("pos IA : " + board.snakes[idIA].currentX + ", " + board.snakes[idIA].currentY);
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
@@ -331,10 +332,12 @@ public class AgentImpl extends Agent
 //				System.out.println(Math.sqrt((Math.pow((bd.snakes[idIA].currentX- x), 2)) + (Math.pow((bd.snakes[idIA].currentY  - y), 2))));
 //				
 //			}
-//			System.out.println("---");
+			System.out.println("---");
 			for (ItemInstance item : l)
 			{
+				
 				System.out.println("on capte un " + item.type);
+				System.out.println("pos snake : " + bd.snakes[idIA].currentX + ", " + bd.snakes[idIA].currentY);
 				
 				poids += IAConstants.USER_FLY;
 			}
@@ -345,12 +348,12 @@ public class AgentImpl extends Agent
 			//ANALYSE SUR LE LONG TERME
 			
 			//pour le moment retourne simplement 0
-			double headX = bd.snakes[agentId].currentX;
-			double headY = bd.snakes[agentId].currentY;
-			
-			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-			
-			poids += 1000 - distance;
+//			double headX = bd.snakes[agentId].currentX;
+//			double headY = bd.snakes[agentId].currentY;
+//			
+//			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+//			
+//			poids += 1000 - distance;
 			
 			return poids;
 		}
