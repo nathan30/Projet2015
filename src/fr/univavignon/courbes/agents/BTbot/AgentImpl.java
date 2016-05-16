@@ -41,6 +41,7 @@ import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
  * l'IA est C6PO (star wars)
  * 
  * @author charlie
+ * @author sabri
  *
  */
 public class AgentImpl extends Agent
@@ -348,12 +349,12 @@ public class AgentImpl extends Agent
 			//ANALYSE SUR LE LONG TERME
 			
 			//pour le moment retourne simplement 0
-//			double headX = bd.snakes[agentId].currentX;
-//			double headY = bd.snakes[agentId].currentY;
+			double headX = bd.snakes[agentId].currentX;
+			double headY = bd.snakes[agentId].currentY;
 //			
-//			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
 //			
-//			poids += 1000 - distance;
+			poids += 1000 - distance;
 			
 			return poids;
 		}
@@ -403,7 +404,10 @@ public class AgentImpl extends Agent
 	* Découper l'aire de jeu en plusieurs parties et calculer des statistiques
 	* sur chaque partie découper (Nombre d'item, Variance des corps de snakes...)
 	* 
-	* Cette fonction met a meilleure partie de l'aire de jeu  
+	* Cette fonction met a meilleure partie de l'aire de jeu
+	* 
+	* @param : Board 
+	* 	l'aire de jeu actuelle utilisé pour estimer la partie la plus sure de la board
 	*/
 	void getSafestArea(Board bd)
 	{
