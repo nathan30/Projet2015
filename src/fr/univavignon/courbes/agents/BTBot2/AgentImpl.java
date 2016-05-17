@@ -45,29 +45,35 @@ import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
  * 
  * @author charlie
  * @author sabri
+ * @author Alexandre
  *
  */
 public class AgentImpl extends Agent
 {	
-	//ATTRIBUTS
+	/** un tableau contenant les poids lors de la dernière itération **/
 	double derniersPoids[] = null;
-	int idE; //l'id player de l'ennemi
-	//(lancez une partie avec 2 joueur pour le moment)
+	/** le playerId de l'ennemi au cas où on veut prendre ses mouvements en compte **/
+	int idE;
+	/** l'id de notre agent **/
 	int idIA;
+	/** la dernière direction prise, initialisé à RIGHT pour ne pas rentre dans un mur au début d'une manche **/
 	Direction lastDir = Direction.RIGHT;
-	
+	/** 
+	 * si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
+	 * sinon,prend seulement les 3 dir de l'iA
+	 * **/
 	boolean calculMvEnnemi = false;
-	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
-	//sinon,prend seulement les 3 dir de l'iA
 	
-	//affichage debug
+	
+	/** Affiche l'arbre de recherche et différents infos sur la récursivité en cours**/
 	boolean afficherInfosRec = false;
-	//affiche l'arbre de recherche, avec les infos
-	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
+	/** 
+	 * 	affiche divers infos, et les parametres du backtracking
+	 * affiche le temps d'execution de la fonction poids() recursive
+	 * affiche la direction finale prise par l'ia, a la fin de processDirection
+	 * 
+	 * **/
 	boolean afficherInfosInitiales = false;
-	//affiche divers infos, et les parametres du backtracking
-	//affiche le temps d'execution de la fonction poids() recursive
-	//affiche la direction finale prise par l'ia, a la fin de processDirection
 	boolean longTermFlag = true;
 	
 	int agentId = -1;
@@ -98,14 +104,15 @@ public class AgentImpl extends Agent
 		if (idIA == 0) idE = 1;
 		else		  idE = 0;
 		
+		//on utilise PhysBoard pour pouvoir accéder à l'attribut itemPopupRate et le mettre à 0
+		// pour ne pas générer des items dans le backtracking
 		PhysBoard board = (PhysBoard)getBoard();
 		
-		
 		Direction result = Direction.NONE;
-		// si partie a commence
+		// si la partie a commence
 		if(board != null)
 		{
-			board.itemPopupRate = 0;
+			board.itemPopupRate = 0; //pour ne pas générer des items imaginaires dans le backtracking
 			if (afficherInfosInitiales)
 			{
 				double pasDuree = IAConstants.PETIT_PAS_DUREE * IAConstants.NB_PETIT_PAS;
@@ -120,15 +127,14 @@ public class AgentImpl extends Agent
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
 			
-			
-			/***/
 			getSafestArea(board);
 			//System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
-			/***/
+			
+			//calculer le temps de la fonction du backtracking
 			long tpsDeb = System.currentTimeMillis();
 			double[] poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
 			long tpsFin = System.currentTimeMillis();
-			derniersPoids = poids;
+			
 			if (afficherInfosInitiales)
 			{
 				System.out.println("----APRES RECUSRISIVTE-----------------------------");
@@ -173,18 +179,15 @@ public class AgentImpl extends Agent
 	}
 	
 	/**
-	 * @param bd
-	 * @param niv
-	 * @param lim
-	 * @return
+	 * Fonction récursive qui retourne le score du 'board'
+	 * @param bd le 'board' sur lequel on backtrack
+	 * @param niv le niveau du backtracking
+	 * @param lim le dernier niveau du backtracking (c.f : IAConstants.PROFONDEUR)
+	 * @return le poids (score) du 'board'
+	 * 
+	 * @author Charlie
+	 * @author Alexandre (modifs mineurs)
 	 */
-	//FONCTIONS CALCULS DE POIDS
-
-	//fonction recursive qui retourne le poids (score)
-	//pour chaque directions
-	//i = 0 : poids si l'ia va a gauche
-	//i = 1 : tout droit
-	//i = 2 : a droite
 	double[] poids(PhysBoard bd, int niv, int lim)
 	{
 		checkInterruption();
@@ -194,9 +197,7 @@ public class AgentImpl extends Agent
 			for (int i = 0; i < niv; i++) System.out.print("\t");
 			System.out.println(niv + "/" + lim + " |  coo IA : (" + bd.snakes[idIA].currentX + "," + bd.snakes[1].currentY + ") crntAngle = "+ bd.snakes[idIA].currentAngle + " rad");
 		}
-		
-		//CONDITION D'ARRET
-		
+				
 		//si l'IA meurt, on elague
 		if (bd.snakes[idIA].eliminatedBy != null)
 		{
@@ -221,9 +222,13 @@ public class AgentImpl extends Agent
 			
 			double poids = evaluer(bd);
 			double[] tab = {poids,poids,poids};
+			// si derniersPoids n'a pas été encore initialisé, on l'initialise
 			if (derniersPoids == null){
 				derniersPoids = tab;
 			}
+			//si ça vaut la peine, on met dans tab la moyenne des poids de cette itération et l'itération précédente
+			//c'est utile car l'IA, quand il s'approche d'un item, backtrack et ne voit plus l'item dans la prochaine itération
+			// donc ici ça permet de lui dire "attention ici il y avait un item avant"
 			if (caVautLaPeine(tab, derniersPoids)){
 				moyenneTab(tab, derniersPoids);
 			}
@@ -334,7 +339,14 @@ public class AgentImpl extends Agent
 		
 	}
 	
-	//evalue la board passe en parametre
+
+		/**
+		 * Evalue la board passé en paramètre
+		 * @param bd board à évaluer
+		 * @return le poids du board
+		 * 
+		 * @author Charlie
+		 */
 		double evaluer(Board bd)
 		{
 			
@@ -346,94 +358,69 @@ public class AgentImpl extends Agent
 			{
 				poids += IAConstants.MORT_ENNEMI;
 			}
-			//ITEMS RECUPEREES
-			LinkedList<ItemInstance> itemsIA = itemsRecolteParIA((PhysBoard)bd);
-			LinkedList<ItemInstance> itemsAutres = itemsRecolteParAutres((PhysBoard)bd);
+			//ITEMS RECUPEREES PAR L'IA
+			LinkedList<ItemInstance> itemsIA = itemsRecolteParIA(bd);
+			//ITEMS RECUPEREES PAR LES AUTRES JOUEURS
+			LinkedList<ItemInstance> itemsAutres = itemsRecolteParAutres(bd);
 			
 			poids += evalueItemsAutres(itemsAutres);
 			poids += evalueItemsIA(itemsIA);
-//			System.out.println("---");	
-//			for (ItemInstance item : l)
-//			{
-//				int x = item.x;
-//				int y = item.y;
-//				System.out.println(item.type);
-//				System.out.println("X ia = " + bd.snakes[idIA].currentX + ", X item = " + x);
-//				System.out.println("Y ia = " + bd.snakes[idIA].currentY + ", Y item = " + y);
-//				System.out.println(Math.sqrt((Math.pow((bd.snakes[idIA].currentX- x), 2)) + (Math.pow((bd.snakes[idIA].currentY  - y), 2))));
-//				
-//			}
 			
-			
-			//TO DO
-
-			//ANALYSE SUR LE LONG TERME
-			
-			//pour le moment retourne simplement 0
 			double headX = bd.snakes[agentId].currentX;
-			double headY = bd.snakes[agentId].currentY;
-//			
-			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-//			
+			double headY = bd.snakes[agentId].currentY;		
+			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));		
 			poids += 1000 - distance;
 			
 			return poids;
 		}
 		
-		//fonction qui renvoie les items que l'ia a attrapé dans ces tests de BT
-		LinkedList<ItemInstance> itemsRecolteParIA(PhysBoard board)
+		/**
+		 * fonction qui renvoie les items que l'ia a attrapé dans ces tests de BT
+		 * @param board le 'board' imaginaire du backtracking
+		 * @return une liste d'items
+		 * 
+		 * @author Alexandre
+		 * @author Charlie
+		 */
+		LinkedList<ItemInstance> itemsRecolteParIA(Board board)
 		{
 			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
 			
-			//on enuemre les items choppe pendant le BT
-				//on ajoute a la liste items celle qui ont un id superieur
+			//on enuemre les items prises pendant le BT
 			for (ItemInstance item : board.snakes[idIA].currentItems)
 			{
-				//System.out.println("IA - " + item.type);
+				// on rajoute l'item à la liste si le temps de son existance est inférieur au temps du backtracking
+				// donc on rajoute l'item que si elle était prise pendant l'itération du backtracking
 				if ( (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
 				{
 					items.add(item);
 				}
 			}
-
-			
-//			//on enumere les items de l'ia
-//			System.out.println("---");
-//			Iterator<ItemInstance> it = board.snakes[idIA].currentItems.iterator();
-//			while(it.hasNext())
-//			{	
-//				PhysItemInstance item = (PhysItemInstance)it.next();
-//				System.out.println(item.type + " " + item.itemId +" : " + item.remainingTime + ", " + item.type.duration  + ", " + (item.type.duration - item.remainingTime));
-//			}
-//			
-//			if (board.snakes[idIA].currentItems.peek() != null)
-//			{
-//				LinkedList<ItemInstance> test = (LinkedList<ItemInstance>) board.snakes[idIA].currentItems;
-//				PhysItemInstance item = (PhysItemInstance) test.getLast();
-//				
-//				if (item != null)
-//				{
-//					System.out.println("peek : " + item.itemId);
-//				}
-//			}	
-//			System.out.println("---");
-			
 			return items;
 		}
 		
 		
+		
+		/**
+		 * fonction qui renvoie les items que les autres joueurs a attrapé dans les tests de BT
+		 * @param board le 'board' imaginaire du backtracking
+		 * @return une liste d'items
+		 * 
+		 * @author Alexandre
+		 * @author Charlie
+		 */
 		LinkedList<ItemInstance> itemsRecolteParAutres(Board board)
 		{
 			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
 			
-			//on enuemre les items choppe pendant le BT
-				//on ajoute a la liste items celle qui ont un id superieur
+			//on enuemre les items prises pendant le BT
 			for (Snake snake : board.snakes){
 				if (snake.playerId != idIA){
 				for (ItemInstance item : board.snakes[snake.playerId].currentItems)
 				{
-					//System.out.println("AUTRES - " + item.type);
-					if ( item.type == ItemType.COLLECTIVE_CLEAN || (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
+					// on rajoute l'item à la liste si le temps de son existance est inférieur au temps du backtracking
+					// donc on rajoute l'item que si elle était prise pendant l'itération du backtracking
+					if ( (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
 					{
 						items.add(item);
 					}
@@ -441,41 +428,24 @@ public class AgentImpl extends Agent
 				}
 			}
 			
-
-			
-//			//on enumere les items de l'ia
-//			System.out.println("---");
-//			Iterator<ItemInstance> it = board.snakes[idIA].currentItems.iterator();
-//			while(it.hasNext())
-//			{	
-//				PhysItemInstance item = (PhysItemInstance)it.next();
-//				System.out.println(item.type + " " + item.itemId +" : " + item.remainingTime + ", " + item.type.duration  + ", " + (item.type.duration - item.remainingTime));
-//			}
-//			
-//			if (board.snakes[idIA].currentItems.peek() != null)
-//			{
-//				LinkedList<ItemInstance> test = (LinkedList<ItemInstance>) board.snakes[idIA].currentItems;
-//				PhysItemInstance item = (PhysItemInstance) test.getLast();
-//				
-//				if (item != null)
-//				{
-//					System.out.println("peek : " + item.itemId);
-//				}
-//			}	
-//			System.out.println("---");
-			
 			return items;
 		}
 		
 		
 		
+		/**
+		 * Fonction qui évalue les items que l'IA a pris pendant le BT
+		 * et modifie le poids selon le type d'item prise
+		 * ça ne prend en compte que les item qui affect l'agent ou tout les monde en même temps
+		 * @param itemsIA liste d'items que l'IA a pris
+		 * @return un poids à rajouter au poids principal (ça peut être négatif)
+		 * 
+		 * @author Alexandre
+		 */
 		double evalueItemsIA(LinkedList<ItemInstance> itemsIA){
 			double poidsBis = 0;
 			for (ItemInstance item : itemsIA)
 			{
-				System.out.println("IA - on capte un " + item.type);
-				//System.out.println("pos snake : " + bd.snakes[idIA].currentX + ", " + bd.snakes[idIA].currentY);
-				
 				switch (item.type) {
 				case COLLECTIVE_CLEAN:
 					poidsBis += IAConstants.COLLECTIVE_CLEAN;
@@ -503,13 +473,20 @@ public class AgentImpl extends Agent
 			return poidsBis;
 		}
 	
+		
+		/**
+		 * Fonction qui évalue les items que les autres joueurs ont prisent pendant le BT
+		 * et modifie le poids selon le type d'item prise
+		 * ça ne prend en compte que les items qui affectent les autres joueurs ou tout le monde en même temps
+		 * @param itemsIA liste d'items que l'IA a pris
+		 * @return un poids à rajouter au poids principal (ça peut être négatif)
+		 * 
+		 * @author Alexandre
+		 */
 		double evalueItemsAutres(LinkedList<ItemInstance> itemsAutres){
 			double poidsBis = 0;
 			for (ItemInstance item : itemsAutres)
 			{
-				System.out.println("AUTRES - on capte un " + item.type);
-				//System.out.println("pos snake : " + bd.snakes[idIA].currentX + ", " + bd.snakes[idIA].currentY);
-				
 				switch (item.type) {
 					
 				case OTHERS_FAST:
@@ -539,6 +516,8 @@ public class AgentImpl extends Agent
 	* 
 	* @param : Board 
 	* 	l'aire de jeu actuelle utilisé pour estimer la partie la plus sure de la board
+	* 
+	* @author Sabri
 	*/
 	void getSafestArea(Board bd)
 	{
@@ -608,6 +587,8 @@ public class AgentImpl extends Agent
 	 * 
 	 * @return double 
 	 * 			le taux des pixels disponibles sur cette partie
+	 * 
+	 * @author Sabri
 	 */
 	double ratioSafestArea(int lowBoundX, int upBoundX, int lowBoundY, int upBoundY, PhysBoard tmpBoard)
 	{
@@ -630,7 +611,12 @@ public class AgentImpl extends Agent
 		return (co/surface);
 	}
 	
-	//fonction qui renvoie la moyenne des valeurs de la table
+	
+	/**
+	 * fonction qui renvoie la moyenne des valeurs du tableau
+	 * @param tab tableau à évaluer
+	 * @return la moyenne de ce tableau
+	 */
 	double moyTab(double[] tab)
 	{
 		double total = 0;
@@ -640,9 +626,14 @@ public class AgentImpl extends Agent
 		return (total / tab.length);
 	}
 	
-	//renvoie l'id du nombre max dans le tableau
-	//si il y a plusieurs occurences du maximum
-	//renvoie au hasard l'id de l'une d'elle
+	
+	/**
+	 * renvoie l'id du nombre max dans le tableau
+	 * si il y a plusieurs occurences du maximum
+	 * renvoie au hasard l'id de l'une d'elle
+	 * @param tab tableau à traiter
+	 * @return un id
+	 */	
 	int idMax(double[] tab)
 	{
 		int id = 0;
@@ -662,24 +653,32 @@ public class AgentImpl extends Agent
 	
 	
 	/**
-	 * @param tab1
-	 * @param tab2
-	 * @return
+	 * une fonction qui change les valeurs du tableau tab1 en la moyenne des valeurs des tableau passées en paramètres
+	 * @param tab1 premier tableau 
+	 * @param tab2 deuxième tableau 
+	 * @author Alexandre
 	 */
 	void moyenneTab (double [] tab1, double [] tab2){
 		for (int i=0; i<tab1.length; i++){
-			System.out.println(i+1 + " : " + tab1[i] + " - " + tab2[i]);
 			tab1[i] = (tab1[i]+tab2[i])/2;
 	}
 	
 	}
 	
 	
+	/**
+	 * Une fonction qui calcul la différence entre les valeurs de 2 tableaux, et
+	 * renvoie si il y a une grande différence ou pas
+	 * On l'utilise pour voir s'il y a un changement dramatique dans les poids entre 2 itéartions
+	 * @param tab1 premier tableau
+	 * @param tab2 deuxième tableau
+	 * @return true ou false
+	 * 
+	 * @author Alexandre
+	 */
 	boolean caVautLaPeine(double [] tab1, double [] tab2){
-		boolean vautLaPeine = false;
 		for (int i=0; i<tab1.length; i++){
-			if ((tab2[i] - tab1[i]) >= 2000){
-				System.out.println("***************************** ça vaut la peine");
+			if ((tab2[i] - tab1[i]) >= IAConstants.CHANGEMENT_CRITIQUE ){
 				return true;
 			}
 		}

@@ -1,7 +1,12 @@
 package fr.univavignon.courbes.agents.BTbot;
 
-import java.awt.Color;
-
+/**
+ * Class contenant les constantes que l'IA utilies dans son backtracking
+ *
+ * @author Sabri
+ * @author Charlie
+ * @author Alexandre
+ */
 public class IAConstants {
 	
 	//---------------------------------------------------
@@ -9,24 +14,27 @@ public class IAConstants {
 	//---------------------------------------------------
 	
 	//DEFENSIF
+	/**	la profondeur de la recherche **/
 	public static final int PROFONDEUR = 3;
+	/** la durée d'un pas dans le BT **/
 	public static final long PETIT_PAS_DUREE = 30;//(long) AbstractRoundPanel.PHYS_DELAY;
+	/** le nombre de pas dans le BT **/
 	public static final int NB_PETIT_PAS = 10;
-
+	/** valeur à partir de laquelle on considére un changement de poids critique **/
+	public static final int CHANGEMENT_CRITIQUE = 2000;
 	
 	//---------------------------------------------------
 	//--------- POIDS --------- -------------------------
 	//---------------------------------------------------
-
+	/** le poids si l'IA meurt dans le BT **/
 	public static final int MORT_IA = -1000;
-	public static final int MORT_ENNEMI = 0;
-	public static final int BRANCHE = 0;
+	/** le poids si l'ennemi meurt dans le BT **/
+	public static final int MORT_ENNEMI = 0;	
 	
 	//---------------------------------------------------
 	//--------- POIDS DES ITEMS -------------------------
 	//---------------------------------------------------
 	
-	////EFFET SUR SOI
 	/** Le joueur qui ramasse l'item accélère (bonus) */
 	public static final int USER_FAST = -500;
 	/** Le joueur qui ramasse l'item ralentit (bonus) */
@@ -50,19 +58,3 @@ public class IAConstants {
 	/** L'aire de jeu est réinitialisée (les trainées existantes sont effacées) */
 	public static final int COLLECTIVE_CLEAN = 2000;
 }
-
-//PARAMETRES QUI SEMBLENT BIEN
-	//DEFENSIF = 
-	// lente, pas tres precise mais long terme
-	//	petitPasDuree = 30
-	// 	nbPetitPas = 13
-	//  profondeur = 4
-	//  calculMvEnnemi = false
-	//OU ENCORE
-	// precis tres rapide mais tres court terme
-	//	petitPasDuree = 30
-	// 	nbPetitPas = 10
-	//  profondeur = 3
-	//  calculMvEnnemi = false
-	//OFFENSIF
-	//	??
