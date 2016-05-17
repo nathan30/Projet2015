@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import fr.univavignon.courbes.agents.Agent;
-import fr.univavignon.courbes.agents.BTBot2.IAConstants;
 import fr.univavignon.courbes.common.Board;
 import fr.univavignon.courbes.common.Direction;
 import fr.univavignon.courbes.common.ItemInstance;
@@ -58,14 +57,14 @@ public class AgentImpl extends Agent
 	//sinon,prend seulement les 3 dir de l'iA
 	
 	//affichage debug
-	boolean afficherInfosRec = true;
+	boolean afficherInfosRec = false;
 	//affiche l'arbre de recherche, avec les infos
 	//ATENTION : l'affichage peut pas mal agrandir le temps de calcul
-	boolean afficherInfosInitiales = true;
+	boolean afficherInfosInitiales = false;
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
-	boolean longTermFlag = true;
+	boolean longTermFlag = false;
 	
 	int agentId = -1;
 	
@@ -333,7 +332,7 @@ public class AgentImpl extends Agent
 //				System.out.println(Math.sqrt((Math.pow((bd.snakes[idIA].currentX- x), 2)) + (Math.pow((bd.snakes[idIA].currentY  - y), 2))));
 //				
 //			}
-			System.out.println("---");
+			//System.out.println("---");
 			for (ItemInstance item : l)
 			{
 				

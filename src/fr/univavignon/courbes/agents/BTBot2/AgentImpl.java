@@ -18,12 +18,18 @@ package fr.univavignon.courbes.agents.BTBot2;
  * along with Courbes. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.print.attribute.standard.MediaSize.Other;
+
 import fr.univavignon.courbes.agents.Agent;
+import fr.univavignon.courbes.agents.BTbot.*;
 import fr.univavignon.courbes.common.Board;
 import fr.univavignon.courbes.common.Direction;
+import fr.univavignon.courbes.common.ItemInstance;
+import fr.univavignon.courbes.common.ItemType;
 import fr.univavignon.courbes.common.Position;
 import fr.univavignon.courbes.common.Snake;
 import fr.univavignon.courbes.inter.simpleimpl.AbstractRoundPanel;
@@ -38,23 +44,17 @@ import fr.univavignon.courbes.physics.simpleimpl.PhysicsEngineImpl;
  * l'IA est C6PO (star wars)
  * 
  * @author charlie
+ * @author sabri
  *
  */
 public class AgentImpl extends Agent
 {	
 	//ATTRIBUTS
-	Board board = null;
-	double [] poids = null;
-	Snake snakes[] = null;
-	int snakeIAX = 0;
-	int snakeIAY = 0;
-	double distanceE = Double.POSITIVE_INFINITY; //http://docs.oracle.com/javase/6/docs/api/java/lang/Integer.html
-	
-	
+	double derniersPoids[] = null;
 	int idE; //l'id player de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
-	Direction lastDir = Direction.RIGHT;
+	Direction lastDir = Direction.NONE;
 	
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
@@ -68,7 +68,7 @@ public class AgentImpl extends Agent
 	//affiche divers infos, et les parametres du backtracking
 	//affiche le temps d'execution de la fonction poids() recursive
 	//affiche la direction finale prise par l'ia, a la fin de processDirection
-	
+	boolean longTermFlag = true;
 	
 	int agentId = -1;
 	
@@ -91,22 +91,21 @@ public class AgentImpl extends Agent
 	@Override
 	public Direction processDirection()
 	{	
-		
 		checkInterruption();	// on doit tester l'interruption au début de chaque méthode
-		
+
 		//on determine les id
 		idIA = getPlayerId();
+		if (idIA == 0) idE = 1;
+		else		  idE = 0;
 		
-		//if (idIA == 0) idE = 1;
-		//else		  idE = 0;
+		PhysBoard board = (PhysBoard)getBoard();
 		
-		this.board = getBoard();
 		
 		Direction result = Direction.NONE;
 		// si partie a commence
 		if(board != null)
 		{
-			
+			board.itemPopupRate = 0;
 			if (afficherInfosInitiales)
 			{
 				double pasDuree = IAConstants.PETIT_PAS_DUREE * IAConstants.NB_PETIT_PAS;
@@ -117,26 +116,9 @@ public class AgentImpl extends Agent
 				
 				System.out.println("  soit une vision de  = " + board.snakes[idIA].movingSpeed * pasDuree * IAConstants.PROFONDEUR + "px (profondeur de " + IAConstants.PROFONDEUR + ")");
 				System.out.println("  dist IA pr faire 90° = " + (Math.PI/2.) / board.snakes[idIA].turningSpeed * board.snakes[idIA].movingSpeed + " px");
+				System.out.println("pos IA : " + board.snakes[idIA].currentX + ", " + board.snakes[idIA].currentY);
 				System.out.println("----AVANT RECUSRISIVTE-----------------------------");
 			}
-			
-			this.snakeIAX =  board.snakes[idIA].currentX;
-			this.snakeIAY =  board.snakes[idIA].currentY;
-			this.snakes = board.snakes;
-			for (Snake snake : snakes){
-				
-				System.out.println("X ia = " + snakeIAX + ", X e = " + snake.currentX);
-				System.out.println("Y ia = " + snakeIAY + ", Y e = " + snake.currentY);
-				System.out.println(Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2))));
-				
-				if ( (snake.playerId != idIA) && Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2))) <= this.distanceE){
-					this.distanceE = (double)Math.sqrt((Math.pow((snakeIAX - snake.currentX), 2)) + (Math.pow((snakeIAY - snake.currentY), 2)));
-					idE = snake.playerId;
-					
-				}
-				//System.out.println("DistanceE = " + distanceE);
-			}
-			
 			
 			
 			/***/
@@ -144,9 +126,9 @@ public class AgentImpl extends Agent
 			//System.out.println("Safest Area : x => "+cooSafestArea[0]+" y => "+cooSafestArea[1]);
 			/***/
 			long tpsDeb = System.currentTimeMillis();
-			poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsive
+			double[] poids = poids(board, 0, IAConstants.PROFONDEUR); //lancement de la fonct recrsiv
 			long tpsFin = System.currentTimeMillis();
-			
+			derniersPoids = poids;
 			if (afficherInfosInitiales)
 			{
 				System.out.println("----APRES RECUSRISIVTE-----------------------------");
@@ -187,9 +169,6 @@ public class AgentImpl extends Agent
 		}
 			
 		lastDir = result;
-		poids = null;
-		board = null;
-		distanceE = Double.POSITIVE_INFINITY;
 		return result;
 	}
 	
@@ -206,7 +185,7 @@ public class AgentImpl extends Agent
 	//i = 0 : poids si l'ia va a gauche
 	//i = 1 : tout droit
 	//i = 2 : a droite
-	double[] poids(Board bd, int niv, int lim)
+	double[] poids(PhysBoard bd, int niv, int lim)
 	{
 		checkInterruption();
 		
@@ -228,6 +207,7 @@ public class AgentImpl extends Agent
 			}
 			
 			double[] tab = {IAConstants.MORT_IA,IAConstants.MORT_IA,IAConstants.MORT_IA};
+			derniersPoids = tab;
 			return tab;
 		}
 		//si on arrive en branche, on evalue la board
@@ -241,6 +221,13 @@ public class AgentImpl extends Agent
 			
 			double poids = evaluer(bd);
 			double[] tab = {poids,poids,poids};
+			if (derniersPoids == null){
+				derniersPoids = tab;
+			}
+			if (caVautLaPeine(tab, derniersPoids)){
+				moyenneTab(tab, derniersPoids);
+			}
+			derniersPoids = tab;
 			return tab;
 		}
 		//SINON
@@ -266,10 +253,10 @@ public class AgentImpl extends Agent
 					{
 						checkInterruption();
 						
-						//on met a none les directions de chaques snakes
+						//on met a none les directions de chaque snake
 						for (int i = 0; i < bd.snakes.length; i++)
 							commandes[i] = Direction.NONE;
-						//puis on applique lesdirections en cours de test
+						//puis on applique les directions en cours de test
 						commandes[idIA] = dirIA;
 						commandes[idE] = dirE;
 						
@@ -285,9 +272,15 @@ public class AgentImpl extends Agent
 						}
 						
 						//on calcule le poids de cette nouvelle board
+						
 						pds = poids(bdTmp, niv+1, lim);
+						if (derniersPoids == null){
+							derniersPoids = pds;
+						}
+						if (caVautLaPeine(pds, derniersPoids)){
+							moyenneTab(pds, derniersPoids);
+						}
 						moyenne[iDir] += moyTab(pds);
-						bdTmp = null;
 					}
 					moyenne[iDir] = moyenne[iDir] / 3.;
 				}
@@ -296,7 +289,7 @@ public class AgentImpl extends Agent
 				else
 				{
 					
-					//on applique a la board les mouvement en cours d'enumeration
+					///on applique a la board les mouvement en cours d'enumeration
 					
 					//on met a none les directions de chaques snakes
 					for (int i = 0; i < bd.snakes.length; i++)
@@ -317,8 +310,14 @@ public class AgentImpl extends Agent
 					
 					//on calcule le poids de cette nouvelle board
 					pds = poids(bdTmp, niv+1, lim);
+					if (derniersPoids == null){
+						derniersPoids = pds;
+					}
+					if (caVautLaPeine(pds, derniersPoids)){
+						moyenneTab(pds, derniersPoids);
+					}
+					derniersPoids = pds;
 					moyenne[iDir] = moyTab(pds);
-					bdTmp = null;
 				}
 				
 				if (afficherInfosRec)
@@ -328,7 +327,6 @@ public class AgentImpl extends Agent
 				}
 				
 				iDir++;
-				bdTmp = null;
 			}
 			
 			return moyenne;
@@ -337,52 +335,224 @@ public class AgentImpl extends Agent
 	}
 	
 	//evalue la board passe en parametre
-	double evaluer(Board bd)
-	{
-		
-		//valeur de poids renvoye, modifie par les conditions suivantes.
-		double poids = 0;
-		
-		//MORT ENNEMI
-		if (bd.snakes[idE].eliminatedBy != null)
+		double evaluer(Board bd)
 		{
-			poids += IAConstants.MORT_ENNEMI;
-		}
-		//ITEMS RECUPEREES
-		
-		//TO DO
+			
+			//valeur de poids renvoye, modifie par les conditions suivantes.
+			double poids = 0;
+			
+			//MORT ENNEMI
+			if (bd.snakes[idE].eliminatedBy != null)
+			{
+				poids += IAConstants.MORT_ENNEMI;
+			}
+			//ITEMS RECUPEREES
+			LinkedList<ItemInstance> itemsIA = itemsRecolteParIA(bd);
+			LinkedList<ItemInstance> itemsAutres = itemsRecolteParAutres(bd);
+			
+			poids += evalueItemsAutres(itemsAutres);
+			poids += evalueItemsIA(itemsIA);
+//			System.out.println("---");	
+//			for (ItemInstance item : l)
+//			{
+//				int x = item.x;
+//				int y = item.y;
+//				System.out.println(item.type);
+//				System.out.println("X ia = " + bd.snakes[idIA].currentX + ", X item = " + x);
+//				System.out.println("Y ia = " + bd.snakes[idIA].currentY + ", Y item = " + y);
+//				System.out.println(Math.sqrt((Math.pow((bd.snakes[idIA].currentX- x), 2)) + (Math.pow((bd.snakes[idIA].currentY  - y), 2))));
+//				
+//			}
+			
+			
+			//TO DO
 
-		//ANALYSE SUR LE LONG TERME
+			//ANALYSE SUR LE LONG TERME
+			
+			//pour le moment retourne simplement 0
+			double headX = bd.snakes[agentId].currentX;
+			double headY = bd.snakes[agentId].currentY;
+//			
+			double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
+//			
+			poids += 1000 - distance;
+			
+			return poids;
+		}
 		
-		//pour le moment retourne simplement 0
-		double headX = bd.snakes[agentId].currentX;
-		double headY = bd.snakes[agentId].currentY;
+		//fonction qui renvoie les items que l'ia a attrapé dans ces tests de BT
+		LinkedList<ItemInstance> itemsRecolteParIA(Board board)
+		{
+			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
+			
+			//on enuemre les items choppe pendant le BT
+				//on ajoute a la liste items celle qui ont un id superieur
+			for (ItemInstance item : board.snakes[idIA].currentItems)
+			{
+				//System.out.println("IA - " + item.type);
+				if ( item.type == ItemType.COLLECTIVE_CLEAN || (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
+				{
+					items.add(item);
+				}
+			}
+
+			
+//			//on enumere les items de l'ia
+//			System.out.println("---");
+//			Iterator<ItemInstance> it = board.snakes[idIA].currentItems.iterator();
+//			while(it.hasNext())
+//			{	
+//				PhysItemInstance item = (PhysItemInstance)it.next();
+//				System.out.println(item.type + " " + item.itemId +" : " + item.remainingTime + ", " + item.type.duration  + ", " + (item.type.duration - item.remainingTime));
+//			}
+//			
+//			if (board.snakes[idIA].currentItems.peek() != null)
+//			{
+//				LinkedList<ItemInstance> test = (LinkedList<ItemInstance>) board.snakes[idIA].currentItems;
+//				PhysItemInstance item = (PhysItemInstance) test.getLast();
+//				
+//				if (item != null)
+//				{
+//					System.out.println("peek : " + item.itemId);
+//				}
+//			}	
+//			System.out.println("---");
+			
+			return items;
+		}
 		
-		double distance = Math.sqrt(Math.pow(headX-cooSafestArea[0], 2) + Math.pow(headY-cooSafestArea[1], 2));
-		//System.out.println("distance : "+distance);
-//		double[] tab = {1000-distance, 1000-distance, 1000-distance};
-//		return tab;
 		
-		poids += 1000 - distance;
+		LinkedList<ItemInstance> itemsRecolteParAutres(Board board)
+		{
+			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
+			
+			//on enuemre les items choppe pendant le BT
+				//on ajoute a la liste items celle qui ont un id superieur
+			for (Snake snake : board.snakes){
+				if (snake.playerId != idIA){
+				for (ItemInstance item : board.snakes[snake.playerId].currentItems)
+				{
+					//System.out.println("AUTRES - " + item.type);
+					if ( item.type == ItemType.COLLECTIVE_CLEAN || (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
+					{
+						items.add(item);
+					}
+				}
+				}
+			}
+			
+
+			
+//			//on enumere les items de l'ia
+//			System.out.println("---");
+//			Iterator<ItemInstance> it = board.snakes[idIA].currentItems.iterator();
+//			while(it.hasNext())
+//			{	
+//				PhysItemInstance item = (PhysItemInstance)it.next();
+//				System.out.println(item.type + " " + item.itemId +" : " + item.remainingTime + ", " + item.type.duration  + ", " + (item.type.duration - item.remainingTime));
+//			}
+//			
+//			if (board.snakes[idIA].currentItems.peek() != null)
+//			{
+//				LinkedList<ItemInstance> test = (LinkedList<ItemInstance>) board.snakes[idIA].currentItems;
+//				PhysItemInstance item = (PhysItemInstance) test.getLast();
+//				
+//				if (item != null)
+//				{
+//					System.out.println("peek : " + item.itemId);
+//				}
+//			}	
+//			System.out.println("---");
+			
+			return items;
+		}
 		
-		return poids;
-	}
+		
+		
+		double evalueItemsIA(LinkedList<ItemInstance> itemsIA){
+			double poidsBis = 0;
+			for (ItemInstance item : itemsIA)
+			{
+				System.out.println("IA - on capte un " + item.type);
+				//System.out.println("pos snake : " + bd.snakes[idIA].currentX + ", " + bd.snakes[idIA].currentY);
+				
+				switch (item.type) {
+				case COLLECTIVE_CLEAN:
+					poidsBis += IAConstants.COLLECTIVE_CLEAN;
+					break;
+					
+				case COLLECTIVE_TRAVERSE:
+					poidsBis += IAConstants.COLLECTIVE_TRAVERSE;
+					break;
+					
+				case USER_FAST:
+					poidsBis += IAConstants.USER_FAST;
+					break;
+					
+				case USER_FLY:
+					poidsBis += IAConstants.USER_FLY;
+					break;
+					
+				case USER_SLOW:
+					poidsBis += IAConstants.USER_SLOW;
+					break;
+				default:
+					break;
+				}
+			}
+			return poidsBis;
+		}
 	
+		double evalueItemsAutres(LinkedList<ItemInstance> itemsAutres){
+			double poidsBis = 0;
+			for (ItemInstance item : itemsAutres)
+			{
+				System.out.println("AUTRES - on capte un " + item.type);
+				//System.out.println("pos snake : " + bd.snakes[idIA].currentX + ", " + bd.snakes[idIA].currentY);
+				
+				switch (item.type) {
+					
+				case OTHERS_FAST:
+					poidsBis += IAConstants.OTHERS_FAST;
+					break;
+					
+				case OTHERS_SLOW:
+					poidsBis += IAConstants.OTHERS_SLOW;
+					break;
+					
+				case OTHERS_THICK:
+					poidsBis += IAConstants.OTHERS_THICK;
+					break;
+					
+				default:
+					break;
+				}
+			}
+			return poidsBis;
+		}
 	
 	/**
 	* Découper l'aire de jeu en plusieurs parties et calculer des statistiques
 	* sur chaque partie découper (Nombre d'item, Variance des corps de snakes...)
-	* @return : 
-	* 	un tableau contenant les coordonnées du centre de de la meilleure partie de l'aire de jeu 
+	* 
+	* Cette fonction met a meilleure partie de l'aire de jeu
+	* 
+	* @param : Board 
+	* 	l'aire de jeu actuelle utilisé pour estimer la partie la plus sure de la board
 	*/
 	void getSafestArea(Board bd)
 	{
 		double []coo = new double[2];
 		PhysBoard tmpBoard = new PhysBoard((PhysBoard) bd);
-		//int [][]totalItem = new int[4][4];
-		int []safestArea = new int[3];
+		
+		double headX = bd.snakes[agentId].currentX;
+		double headY = bd.snakes[agentId].currentY;		
+		
+		double []safestArea = new double[4];
 		safestArea[0]=0; // Le nombre d'item max
+		safestArea[3]=0;
 		int upperBoundX, upperBoundY, co = 0;
+		double ratio;
 		// 1- Pour commencer on fait les items 
 		if(!tmpBoard.items.isEmpty())
 		{
@@ -392,30 +562,72 @@ public class AgentImpl extends Agent
 				{
 					upperBoundX = i + bd.height/4-1;
 					upperBoundY = j + bd.width/4-1;
-					for(int k=0;k<tmpBoard.items.size(); k++)
+					// Ignorer l'emplacement actuelle du snake
+					if(headX < i || headX > upperBoundX || headY < i || headY > upperBoundY)
 					{
-						if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
-													   && tmpBoard.items.get(k).y > j
-													   && tmpBoard.items.get(k).y < upperBoundY)
+						for(int k=0;k<tmpBoard.items.size(); k++)
+						{
+							if(tmpBoard.items.get(k).x > i && tmpBoard.items.get(k).x<upperBoundX 
+														   && tmpBoard.items.get(k).y > j
+														   && tmpBoard.items.get(k).y < upperBoundY)
+								{
+									co++;
+								}
+						
+						}
+						ratio = ratioSafestArea(i,upperBoundX,j,upperBoundY,tmpBoard);
+						if(ratio <= safestArea[3] && co >= safestArea[0])
+						{
+							safestArea[0]=co;
+							safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
+							safestArea[2]= bd.width/8 + j;
+							safestArea[3]=ratio;
+							if(longTermFlag)
 							{
-								co++;
+								//System.out.println("Safest Area => x : "+safestArea[1]+" y : "+safestArea[2]);
+								//System.out.println("taux de pixels : "+ratio);
 							}
-					
-					}
-					if(co > safestArea[0])
-					{
-						safestArea[0]=co;
-						safestArea[1]= bd.height/8 + i;	// Utilisé pour renvoyer le centre de l'aire le plus "sure"
-						safestArea[2]= bd.width/8 + j;
-					}
-					co=0;
 							
+						}
+						co=0;
+					}		
 				}
 			}
 		}
 		cooSafestArea[0] = safestArea[1];
 		cooSafestArea[1] = safestArea[2];
 
+	}
+	
+	/**
+	 * Fonction qui retourne le taux de pixels disponible sur une partie de la 'Board' passée en paramètre
+	 * @param lowBoundX : borne inférieure sur les abscisses d'une partie du board
+	 * @param upBoundX :  borne supérieure les abscisses d'une partie du board
+	 * @param lowBoundY : borne inférieure sur les coordonnées d'une partie du board
+	 * @param upBoundY : borne supérieure sur les coordonnées d'une partie du board
+	 * 
+	 * @return double 
+	 * 			le taux des pixels disponibles sur cette partie
+	 */
+	double ratioSafestArea(int lowBoundX, int upBoundX, int lowBoundY, int upBoundY, PhysBoard tmpBoard)
+	{
+		double surface, ratio=0; 
+		int co=0;
+		boolean positionExist=false;
+		for(int idS=0; idS<tmpBoard.snakes.length; idS++)
+		{	
+			// Parcourir la zone passée en paramètre
+			for(int i=lowBoundX; i<upBoundX; ++i)
+			{
+				for(int j=lowBoundY; j<upBoundY; ++j)
+				{
+					positionExist = tmpBoard.snakes[idS].oldTrail.contains(new Position(i,j));
+					if(positionExist) co++;
+				}
+			}
+		}
+		surface = (upBoundX - lowBoundX)*(upBoundY - lowBoundY);
+		return (co/surface);
 	}
 	
 	//fonction qui renvoie la moyenne des valeurs de la table
@@ -447,4 +659,32 @@ public class AgentImpl extends Agent
 		
 		return id;
 	}
+	
+	
+	/**
+	 * @param tab1
+	 * @param tab2
+	 * @return
+	 */
+	void moyenneTab (double [] tab1, double [] tab2){
+		for (int i=0; i<tab1.length; i++){
+			System.out.println(i+1 + " : " + tab1[i] + " - " + tab2[i]);
+			tab1[i] = (tab1[i]+tab2[i])/2;
+	}
+	
+	}
+	
+	
+	boolean caVautLaPeine(double [] tab1, double [] tab2){
+		boolean vautLaPeine = false;
+		for (int i=0; i<tab1.length; i++){
+			if ((tab2[i] - tab1[i]) >= 2000){
+				System.out.println("***************************** ça vaut la peine");
+				return true;
+			}
+		}
+		return false;
+	}
+	
+
 }

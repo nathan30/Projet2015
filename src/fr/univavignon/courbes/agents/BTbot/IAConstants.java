@@ -28,27 +28,27 @@ public class IAConstants {
 	
 	////EFFET SUR SOI
 	/** Le joueur qui ramasse l'item accélère (bonus) */
-	public static final int USER_FAST = 200;
+	public static final int USER_FAST = -500;
 	/** Le joueur qui ramasse l'item ralentit (bonus) */
-	public static final int USER_SLOW = 200;
+	public static final int USER_SLOW = 2000;
 	/** Le joueur qui ramasse l'item vole au dessus des obstacles (bonus) */
-	public static final int USER_FLY = 200;
+	public static final int USER_FLY = 2000;
 	////	EFFET SUR LES AUTRES JOUEURS
 	/** Les autres joueurs accélèrent (malus) */
-	public static final int OTHERS_FAST = 200;
+	public static final int OTHERS_FAST = 2000;
 	/** Les autres joueurs laissent des trainées plus épaisses (malus) */
-	public static final int OTHERS_THICK = 200;
+	public static final int OTHERS_THICK = 2000;
 	/** Les autres joueurs ralentissent (malus) */
-	public static final int OTHERS_SLOW = 200;
+	public static final int OTHERS_SLOW = 2000;
 	/** Les commandes des autres joueurs sont inversées (malus) */
-	public static final int OTHERS_REVERSE = 200;
+	public static final int OTHERS_REVERSE = 2000;
 	////	EFFET SUR TOUS
 	/** La probabilité d'apparition d'un item augmente */
-	public static final int COLLECTIVE_WEALTH = 200;
+	public static final int COLLECTIVE_WEALTH = 500;
 	/** Tous les joueurs peuvent traverser les murs d'enceinte */
-	public static final int COLLECTIVE_TRAVERSE = 200;
+	public static final int COLLECTIVE_TRAVERSE = 1000;
 	/** L'aire de jeu est réinitialisée (les trainées existantes sont effacées) */
-	public static final int COLLECTIVE_CLEAN = 200;
+	public static final int COLLECTIVE_CLEAN = 2000;
 }
 
 //PARAMETRES QUI SEMBLENT BIEN
