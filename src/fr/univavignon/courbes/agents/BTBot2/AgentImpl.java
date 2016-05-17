@@ -54,7 +54,7 @@ public class AgentImpl extends Agent
 	int idE; //l'id player de l'ennemi
 	//(lancez une partie avec 2 joueur pour le moment)
 	int idIA;
-	Direction lastDir = Direction.NONE;
+	Direction lastDir = Direction.RIGHT;
 	
 	boolean calculMvEnnemi = false;
 	//si true, prend en compte les 3 dir de l'IA et les 3 dir de l'ennemi
@@ -347,8 +347,8 @@ public class AgentImpl extends Agent
 				poids += IAConstants.MORT_ENNEMI;
 			}
 			//ITEMS RECUPEREES
-			LinkedList<ItemInstance> itemsIA = itemsRecolteParIA(bd);
-			LinkedList<ItemInstance> itemsAutres = itemsRecolteParAutres(bd);
+			LinkedList<ItemInstance> itemsIA = itemsRecolteParIA((PhysBoard)bd);
+			LinkedList<ItemInstance> itemsAutres = itemsRecolteParAutres((PhysBoard)bd);
 			
 			poids += evalueItemsAutres(itemsAutres);
 			poids += evalueItemsIA(itemsIA);
@@ -381,7 +381,7 @@ public class AgentImpl extends Agent
 		}
 		
 		//fonction qui renvoie les items que l'ia a attrapé dans ces tests de BT
-		LinkedList<ItemInstance> itemsRecolteParIA(Board board)
+		LinkedList<ItemInstance> itemsRecolteParIA(PhysBoard board)
 		{
 			LinkedList<ItemInstance> items = new LinkedList<ItemInstance>();
 			
@@ -390,7 +390,7 @@ public class AgentImpl extends Agent
 			for (ItemInstance item : board.snakes[idIA].currentItems)
 			{
 				//System.out.println("IA - " + item.type);
-				if ( item.type == ItemType.COLLECTIVE_CLEAN || (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
+				if ( (item.type.duration - item.remainingTime) < (IAConstants.NB_PETIT_PAS * IAConstants.PETIT_PAS_DUREE) )
 				{
 					items.add(item);
 				}
